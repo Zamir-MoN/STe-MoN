@@ -82,7 +82,7 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
     if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
     
-    const id = parseInt(req.params.id)
+    const id = parseInt(req.params.id as string)
     const { username, password, role } = req.body
 
     const userToUpdate = await prisma.user.findUnique({ where: { id } })
@@ -112,7 +112,7 @@ router.delete('/users/:id', authenticate, async (req: AuthRequest, res) => {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
     if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
 
-    const id = parseInt(req.params.id)
+    const id = parseInt(req.params.id as string)
     if (id === req.userId) return res.status(400).json({ error: 'Cannot delete yourself' })
 
     const userToDelete = await prisma.user.findUnique({ where: { id } })

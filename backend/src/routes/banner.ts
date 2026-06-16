@@ -60,7 +60,7 @@ router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     if (!image_url) return res.status(400).json({ error: 'Image URL is required' })
 
     const banner = await prisma.banner.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: parseInt(req.params.id as string) },
       data: { 
         image_url,
         zoom_size: zoom_size ? parseInt(zoom_size) : 100,
@@ -79,7 +79,7 @@ router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
     if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
     
-    await prisma.banner.delete({ where: { id: parseInt(req.params.id) } })
+    await prisma.banner.delete({ where: { id: parseInt(req.params.id as string) } })
     
     broadcast({ type: 'NEW_BANNER', payload: null }) // Signal change
     res.json({ success: true })

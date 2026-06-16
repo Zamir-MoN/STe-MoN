@@ -117,7 +117,7 @@ router.put('/:id/favorite', async (req: AuthRequest, res) => {
   try {
     const { favorite } = req.body
     const account = await prisma.account.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: parseInt(req.params.id as string) },
       data: { favorite }
     })
     res.json(account)
@@ -129,7 +129,7 @@ router.put('/:id/favorite', async (req: AuthRequest, res) => {
 router.post('/:id/vote', async (req: AuthRequest, res) => {
   try {
     const { vote } = req.body // 'working' or 'not_working'
-    const accountId = parseInt(req.params.id)
+    const accountId = parseInt(req.params.id as string)
 
     if (vote === 'working') {
       await prisma.account.update({
@@ -152,7 +152,7 @@ router.post('/:id/vote', async (req: AuthRequest, res) => {
 // Add to library
 router.post('/:id/library', async (req: AuthRequest, res) => {
   try {
-    const accountId = parseInt(req.params.id)
+    const accountId = parseInt(req.params.id as string)
     await prisma.user.update({
       where: { id: req.userId },
       data: {
@@ -170,7 +170,7 @@ router.post('/:id/library', async (req: AuthRequest, res) => {
 // Remove from library
 router.delete('/:id/library', async (req: AuthRequest, res) => {
   try {
-    const accountId = parseInt(req.params.id)
+    const accountId = parseInt(req.params.id as string)
     await prisma.user.update({
       where: { id: req.userId },
       data: {
@@ -194,7 +194,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
 
     const { alias_name, steam_username, steam_password, description } = req.body
     const account = await prisma.account.update({
-      where: { id: parseInt(req.params.id) },
+      where: { id: parseInt(req.params.id as string) },
       data: {
         alias_name,
         steam_username,
@@ -224,11 +224,11 @@ router.delete('/:id', async (req: AuthRequest, res) => {
     // Must delete related logs first to avoid foreign key errors, or cascade handle it.
     // Our schema doesn't have onDelete Cascade on ActivityLog to Account.
     await prisma.activityLog.deleteMany({
-      where: { account_id: parseInt(req.params.id) }
+      where: { account_id: parseInt(req.params.id as string) }
     })
 
     await prisma.account.delete({
-      where: { id: parseInt(req.params.id) }
+      where: { id: parseInt(req.params.id as string) }
     })
 
     res.json({ message: 'Account deleted' })
@@ -240,7 +240,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
 router.post('/:id/launch', async (req: AuthRequest, res) => {
   try {
     const account = await prisma.account.findUnique({
-      where: { id: parseInt(req.params.id) }
+      where: { id: parseInt(req.params.id as string) }
     })
 
     if (!account) return res.status(404).json({ error: 'Account not found' })

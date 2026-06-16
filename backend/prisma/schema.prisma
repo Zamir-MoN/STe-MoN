@@ -1,0 +1,63 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  username      String   @unique
+  password_hash String
+  role          String   @default("user")
+  profile_name  String?
+  profile_pic   String?
+  steam_path    String?
+  created_at    DateTime @default(now())
+  activityLogs  ActivityLog[]
+  libraryAccounts Account[] @relation("UserLibrary")
+
+  @@index([role])
+}
+
+model Account {
+  id                Int           @id @default(autoincrement())
+  alias_name        String
+  steam_username    String
+  steam_password    String
+  owner_name        String?
+  description       String?
+  notes             String?
+  favorite          Boolean       @default(false)
+  working_votes     Int           @default(0)
+  not_working_votes Int           @default(0)
+  created_at        DateTime      @default(now())
+  activityLogs      ActivityLog[]
+  usersInLibrary    User[]        @relation("UserLibrary")
+
+  @@index([alias_name])
+  @@index([steam_username])
+}
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  user_id    Int
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  action     String
+  account_id Int?
+  account    Account? @relation(fields: [account_id], references: [id], onDelete: SetNull)
+  created_at DateTime @default(now())
+
+  @@index([user_id])
+  @@index([account_id])
+}
+
+model Banner {
+  id        Int      @id @default(autoincrement())
+  image_url String
+  zoom_size Int      @default(100)
+  alignment Int      @default(50)
+  created_at DateTime @default(now())
+}

@@ -172,6 +172,10 @@ router.post('/users/:id/selective-access', authenticate, async (req: AuthRequest
         where: { id: existing.id },
         data: { expires_at: expires_at ? new Date(expires_at) : null }
       })
+      await prisma.user.update({
+        where: { id: user_id },
+        data: { libraryAccounts: { connect: { id: account_id } } }
+      })
       return res.json(updated)
     }
 
@@ -181,6 +185,10 @@ router.post('/users/:id/selective-access', authenticate, async (req: AuthRequest
         account_id,
         expires_at: expires_at ? new Date(expires_at) : null
       }
+    })
+    await prisma.user.update({
+      where: { id: user_id },
+      data: { libraryAccounts: { connect: { id: account_id } } }
     })
     res.json(created)
   } catch (error) { res.status(500).json({ error: 'Server error' }) }

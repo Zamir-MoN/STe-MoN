@@ -71,18 +71,36 @@ router.get('/library', async (req: AuthRequest, res) => {
       include: {
         libraryAccounts: {
           orderBy: { created_at: 'desc' }
-        }
+        },
+        selectiveAccesses: true
       }
     })
 
     if (!user) return res.status(404).json({ error: 'User not found' })
 
     const secureAccounts = user.libraryAccounts.map(acc => {
-      if (req.role !== 'admin' && req.role !== 'owner') {
-        const { steam_password, ...safeAcc } = acc
-        return { ...safeAcc, inLibrary: true }
+      let hasAccess = true;
+      let expires_at = null;
+      let plan_tag = user.access_plan;
+
+      if (user.access_plan === 'SELECTIVE' && req.role !== 'admin' && req.role !== 'owner') {
+        const access = user.selectiveAccesses.find(a => a.account_id === acc.id);
+        if (!access) {
+          hasAccess = false;
+        } else if (access.expires_at && new Date(access.expires_at).getTime() < Date.now()) {
+          hasAccess = false;
+        } else {
+          expires_at = access.expires_at;
+        }
       }
-      return { ...acc, inLibrary: true }
+
+      const returnedAcc = { ...acc, inLibrary: true, hasAccess, expires_at, plan_tag };
+
+      if (req.role !== 'admin' && req.role !== 'owner') {
+        const { steam_password, ...safeAcc } = returnedAcc;
+        return safeAcc;
+      }
+      return returnedAcc;
     })
 
     res.json(secureAccounts)

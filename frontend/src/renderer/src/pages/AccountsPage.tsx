@@ -272,6 +272,17 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                 <Minus size={16} />
               </button>
 
+              {/* Plan Tag */}
+              {acc.plan_tag === 'SELECTIVE' ? (
+                <div className="absolute top-3 left-3 bg-orange-500/80 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-orange-400/50">
+                  {acc.expires_at ? `${Math.max(0, Math.ceil((new Date(acc.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Days Left` : 'Permanent'}
+                </div>
+              ) : (
+                <div className="absolute top-3 left-3 bg-green-500/80 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-green-400/50">
+                  Full Access
+                </div>
+              )}
+
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-90 transition-all duration-300"></div>
               

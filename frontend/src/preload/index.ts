@@ -9,7 +9,8 @@ const api = {
   launchSteam: (username?: string, password?: string, path?: string) => ipcRenderer.invoke('launch-steam', username, password, path),
   closeSteam: () => ipcRenderer.invoke('close-steam'),
   selectSteamPath: () => ipcRenderer.invoke('select-steam-path'),
-  autoDetectSteam: () => ipcRenderer.invoke('auto-detect-steam')
+  autoDetectSteam: () => ipcRenderer.invoke('auto-detect-steam'),
+  getHwid: () => ipcRenderer.invoke('get-hwid')
 }
 
 if (process.contextIsolated) {

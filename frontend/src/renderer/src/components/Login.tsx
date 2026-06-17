@@ -13,7 +13,13 @@ const Login = ({ onLoginSuccess }: { onLoginSuccess: (role: string) => void }) =
     e.preventDefault()
     setError('')
     try {
-      const response = await api.post('/auth/login', { username, password })
+      let hwid = 'UNKNOWN-HWID'
+      // @ts-ignore
+      if (window.api && window.api.getHwid) {
+        // @ts-ignore
+        hwid = await window.api.getHwid()
+      }
+      const response = await api.post('/auth/login', { username, password, hwid })
       localStorage.setItem('steamhub_token', response.data.token)
       localStorage.setItem('steamhub_role', response.data.user.role)
       onLoginSuccess(response.data.user.role)

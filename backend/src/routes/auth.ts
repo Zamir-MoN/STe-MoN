@@ -11,7 +11,7 @@ const prisma = new PrismaClient()
 // Login Route
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body
+    const { username, password, hwid } = req.body
     if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
 
     const user = await prisma.user.findUnique({ where: { username } })
@@ -20,8 +20,24 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash)
     if (!match) return res.status(400).json({ error: 'Invalid credentials' })
 
+    // HWID Check (skip owner)
+    if (user.role !== 'owner') {
+      if (!hwid || hwid === 'UNKNOWN-HWID') {
+        return res.status(400).json({ error: 'Could not determine device ID' })
+      }
+      if (!user.hwid) {
+        // First login -> bind to this device
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { hwid }
+        })
+      } else if (user.hwid !== hwid) {
+        return res.status(403).json({ error: 'This account is bound to another device. Contact an admin to reset your device bind.' })
+      }
+    }
+
     const token = generateToken(user.id)
-    res.json({ token, user: { id: user.id, username: user.username, role: user.role } })
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role, hwid: user.hwid || hwid } })
   } catch (error) {
     res.status(500).json({ error: 'Server error' })
   }
@@ -112,6 +128,28 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
       data: updateData
     })
     res.json({ message: 'User updated', user: { id: user.id, username: user.username, role: user.role, access_plan: user.access_plan } })
+  } catch (error) { res.status(500).json({ error: 'Server error' }) }
+})
+
+// Reset User HWID
+router.put('/users/:id/reset-hwid', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
+
+    const id = parseInt(req.params.id as string)
+    const userToReset = await prisma.user.findUnique({ where: { id } })
+    if (!userToReset) return res.status(404).json({ error: 'User not found' })
+
+    if (requester.role === 'admin' && userToReset.role !== 'user') {
+      return res.status(403).json({ error: 'Admins can only reset normal users' })
+    }
+
+    await prisma.user.update({
+      where: { id },
+      data: { hwid: null }
+    })
+    res.json({ message: 'Device binding reset successfully' })
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })
 

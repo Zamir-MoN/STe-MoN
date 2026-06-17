@@ -12,6 +12,7 @@ model User {
   username      String   @unique
   password_hash String
   role          String   @default("user")
+  hwid          String?
   access_plan   String   @default("FULL") // "FULL" or "SELECTIVE"
   profile_name  String?
   profile_pic   String?

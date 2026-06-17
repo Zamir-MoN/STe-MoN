@@ -161,6 +161,24 @@ ipcMain.handle('close-steam', async () => {
   }
 })
 
+ipcMain.handle('get-hwid', async () => {
+  try {
+    const { exec } = require('child_process')
+    const { promisify } = require('util')
+    const execAsync = promisify(exec)
+    const { stdout } = await execAsync('wmic csproduct get uuid')
+    // Parse the output to get the UUID string
+    const lines = stdout.split('\n').map((line: string) => line.trim()).filter((line: string) => line)
+    if (lines.length >= 2) {
+      return lines[1] // The second line is the actual UUID
+    }
+    return 'UNKNOWN-HWID'
+  } catch (e) {
+    console.error('Failed to get HWID:', e)
+    return 'UNKNOWN-HWID'
+  }
+})
+
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 app.whenReady().then(() => {

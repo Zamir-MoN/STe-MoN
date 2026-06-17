@@ -99,8 +99,27 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
     try {
       await api.delete(`/auth/users/${id}`)
       fetchUsers()
+      if (editingUserId === id) {
+        setEditingUserId(null); 
+        setUsername(''); 
+        setPassword(''); 
+        setFormRole('user'); 
+        setAccessPlan('FULL'); 
+        setShowUserForm(false);
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to delete user')
+    }
+  }
+
+  const handleResetHwid = async (id: number) => {
+    if (!confirm('Reset device binding for this user? They will be bound to the next PC they log into.')) return
+    try {
+      await api.put(`/auth/users/${id}/reset-hwid`)
+      setUserMsg('Device binding reset successfully')
+      setTimeout(() => setUserMsg(''), 3000)
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to reset device binding')
     }
   }
 
@@ -359,12 +378,15 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
                         {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
-                          <button onClick={() => handleEditUserClick(u)} className="text-purple-400 hover:text-purple-300 mr-3">Edit</button>
+                          <button onClick={() => handleResetHwid(u.id)} className="text-blue-400 hover:text-blue-300 mr-3 text-xs" title="Reset Device Bind">Reset Device</button>
+                        )}
+                        {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
+                          <button onClick={() => handleEditUserClick(u)} className="text-purple-400 hover:text-purple-300 mr-3 text-xs">Edit</button>
                         )}
                         {!u.isDefaultAdmin && !u.isSelf && ((currentUserRole === 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
-                          <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400">Delete</button>
+                          <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400 text-xs">Delete</button>
                         )}
                       </td>
                     </tr>

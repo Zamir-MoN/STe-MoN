@@ -274,11 +274,11 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
 
               {/* Plan Tag */}
               {acc.plan_tag === 'SELECTIVE' ? (
-                <div className="absolute top-3 left-3 bg-orange-500/80 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-orange-400/50">
+                <div className="absolute top-3 left-3 bg-black/40 text-orange-400 text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-orange-500/40">
                   {acc.expires_at ? `${Math.max(0, Math.ceil((new Date(acc.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Days Left` : 'Permanent'}
                 </div>
               ) : (
-                <div className="absolute top-3 left-3 bg-green-500/80 text-white text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-green-400/50">
+                <div className="absolute top-3 left-3 bg-black/40 text-green-400 text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-green-500/40">
                   Full Access
                 </div>
               )}

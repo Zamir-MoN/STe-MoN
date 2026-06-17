@@ -26,13 +26,13 @@ const BroadcastPanel = ({ role }: { role: string }) => {
   }
 
   useEffect(() => {
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'owner') {
       fetchBanners()
     }
   }, [role])
 
-  if (role !== 'admin') {
-    return <div className="p-8 text-red-400">Access Denied. Admins only.</div>
+  if (role !== 'admin' && role !== 'owner') {
+    return <div className="p-8 text-red-400">Access Denied. Admins and Owners only.</div>
   }
 
   const handleBroadcastBanner = async (e: React.FormEvent) => {

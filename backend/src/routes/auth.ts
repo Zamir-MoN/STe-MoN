@@ -35,7 +35,7 @@ router.post('/create-user', authenticate, async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
-    const { username, password, role } = req.body
+    const { username, password, role, access_plan } = req.body
     if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
 
     if (role === 'owner') return res.status(403).json({ error: 'Cannot create owner accounts' })
@@ -48,10 +48,10 @@ router.post('/create-user', authenticate, async (req: AuthRequest, res) => {
 
     const password_hash = await bcrypt.hash(password, 10)
     const user = await prisma.user.create({
-      data: { username, password_hash, role: role || 'user' }
+      data: { username, password_hash, role: role || 'user', access_plan: access_plan || 'FULL' }
     })
 
-    res.json({ message: 'User created successfully', user: { id: user.id, username: user.username, role: user.role } })
+    res.json({ message: 'User created successfully', user: { id: user.id, username: user.username, role: user.role, access_plan: user.access_plan } })
   } catch (error) {
     res.status(500).json({ error: 'Server error' })
   }
@@ -64,7 +64,7 @@ router.get('/users', authenticate, async (req: AuthRequest, res) => {
     if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     const users = await prisma.user.findMany({ 
-      select: { id: true, username: true, role: true, created_at: true } 
+      select: { id: true, username: true, role: true, access_plan: true, created_at: true } 
     })
     
     const usersWithFlags = users.map(u => ({
@@ -83,7 +83,7 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
     if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     const id = parseInt(req.params.id as string)
-    const { username, password, role } = req.body
+    const { username, password, role, access_plan } = req.body
 
     const userToUpdate = await prisma.user.findUnique({ where: { id } })
     if (!userToUpdate) return res.status(404).json({ error: 'User not found' })
@@ -101,6 +101,7 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
     }
 
     const updateData: any = { username, role }
+    if (access_plan) updateData.access_plan = access_plan
     if (password) {
       updateData.password_hash = await bcrypt.hash(password, 10)
     }
@@ -109,7 +110,7 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
       where: { id },
       data: updateData
     })
-    res.json({ message: 'User updated', user: { id: user.id, username: user.username, role: user.role } })
+    res.json({ message: 'User updated', user: { id: user.id, username: user.username, role: user.role, access_plan: user.access_plan } })
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })
 
@@ -139,12 +140,74 @@ router.delete('/users/:id', authenticate, async (req: AuthRequest, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })
 
+// Get Selective Accesses for a user
+router.get('/users/:id/selective-access', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
+    const user_id = parseInt(req.params.id as string)
+    const accesses = await prisma.userSelectiveAccess.findMany({
+      where: { user_id },
+      include: { account: true }
+    })
+    res.json(accesses)
+  } catch (error) { res.status(500).json({ error: 'Server error' }) }
+})
+
+// Grant Selective Access to a user
+router.post('/users/:id/selective-access', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
+    
+    const user_id = parseInt(req.params.id as string)
+    const { account_id, expires_at } = req.body // expires_at can be an ISO string or null
+
+    const existing = await prisma.userSelectiveAccess.findUnique({
+      where: { user_id_account_id: { user_id, account_id } }
+    })
+
+    if (existing) {
+      const updated = await prisma.userSelectiveAccess.update({
+        where: { id: existing.id },
+        data: { expires_at: expires_at ? new Date(expires_at) : null }
+      })
+      return res.json(updated)
+    }
+
+    const created = await prisma.userSelectiveAccess.create({
+      data: {
+        user_id,
+        account_id,
+        expires_at: expires_at ? new Date(expires_at) : null
+      }
+    })
+    res.json(created)
+  } catch (error) { res.status(500).json({ error: 'Server error' }) }
+})
+
+// Revoke Selective Access
+router.delete('/users/:id/selective-access/:accountId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const requester = await prisma.user.findUnique({ where: { id: req.userId } })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
+    
+    const user_id = parseInt(req.params.id as string)
+    const account_id = parseInt(req.params.accountId as string)
+
+    await prisma.userSelectiveAccess.deleteMany({
+      where: { user_id, account_id }
+    })
+    res.json({ message: 'Access revoked' })
+  } catch (error) { res.status(500).json({ error: 'Server error' }) }
+})
+
 // Get current user profile
 router.get('/profile', authenticate, async (req: AuthRequest, res) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, username: true, role: true, profile_name: true, profile_pic: true, steam_path: true }
+      select: { id: true, username: true, role: true, access_plan: true, profile_name: true, profile_pic: true, steam_path: true }
     })
     if (!user) return res.status(404).json({ error: 'User not found' })
     res.json(user)

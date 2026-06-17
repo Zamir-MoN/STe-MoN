@@ -12,12 +12,14 @@ model User {
   username      String   @unique
   password_hash String
   role          String   @default("user")
+  access_plan   String   @default("FULL") // "FULL" or "SELECTIVE"
   profile_name  String?
   profile_pic   String?
   steam_path    String?
   created_at    DateTime @default(now())
   activityLogs  ActivityLog[]
   libraryAccounts Account[] @relation("UserLibrary")
+  selectiveAccesses UserSelectiveAccess[]
 
   @@index([role])
 }
@@ -36,6 +38,7 @@ model Account {
   created_at        DateTime      @default(now())
   activityLogs      ActivityLog[]
   usersInLibrary    User[]        @relation("UserLibrary")
+  selectiveAccesses UserSelectiveAccess[]
 
   @@index([alias_name])
   @@index([steam_username])
@@ -60,4 +63,18 @@ model Banner {
   zoom_size Int      @default(100)
   alignment Int      @default(50)
   created_at DateTime @default(now())
+}
+
+model UserSelectiveAccess {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  account_id Int
+  account    Account   @relation(fields: [account_id], references: [id], onDelete: Cascade)
+  expires_at DateTime?
+  created_at DateTime  @default(now())
+
+  @@unique([user_id, account_id])
+  @@index([user_id])
+  @@index([account_id])
 }

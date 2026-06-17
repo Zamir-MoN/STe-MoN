@@ -12,7 +12,8 @@ import PageTransition from './components/PageTransition'
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const AccountsPage = lazy(() => import('./pages/AccountsPage'))
-const AdminPanel = lazy(() => import('./pages/AdminPanel'))
+const UserManagement = lazy(() => import('./pages/UserManagement'))
+const GameManagement = lazy(() => import('./pages/GameManagement'))
 const BroadcastPanel = lazy(() => import('./pages/BroadcastPanel'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
@@ -42,7 +43,8 @@ const AnimatedRoutes = ({ role, showNotification, searchQuery }: { role: string,
       <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><div className="animate-pulse flex flex-col items-center"><div className="w-10 h-10 border-4 border-steam-blue border-t-transparent rounded-full animate-spin"></div><div className="mt-4 text-steam-blue font-semibold tracking-widest">LOADING MODULE...</div></div></div>}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Dashboard role={role} showNotification={showNotification} searchQuery={searchQuery} /></PageTransition>} />
-          <Route path="/admin" element={<PageTransition><AdminPanel role={role} searchQuery={searchQuery} /></PageTransition>} />
+          <Route path="/users" element={<PageTransition><UserManagement role={role} /></PageTransition>} />
+          <Route path="/manage-games" element={<PageTransition><GameManagement searchQuery={searchQuery} /></PageTransition>} />
           <Route path="/broadcast" element={<PageTransition><BroadcastPanel role={role} /></PageTransition>} />
           <Route path="/accounts" element={<PageTransition><AccountsPage role={role} showNotification={showNotification} searchQuery={searchQuery} /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><SettingsPage showNotification={showNotification} /></PageTransition>} />

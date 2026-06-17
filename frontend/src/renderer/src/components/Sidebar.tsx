@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, Users, Shield, MonitorPlay, Settings, LogOut, Play } from 'lucide-react'
+import { LayoutDashboard, Users, Shield, MonitorPlay, Settings, LogOut, Play, Gamepad2 } from 'lucide-react'
 import api from '../api'
 
 const Sidebar = ({ onLogout, role }: { onLogout: () => void, role: string }) => {
@@ -45,21 +45,24 @@ const Sidebar = ({ onLogout, role }: { onLogout: () => void, role: string }) => 
       <Link to="/accounts" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium">
         <Users size={18} className="text-purple-400" /> Library
       </Link>
-      
-      {role === 'admin' && (
-        <>
-          <Link to="/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-cyan-400 mt-4 border border-cyan-500/20 bg-cyan-500/5">
-            <Play size={18} /> Broadcasts
-          </Link>
-          <Link to="/admin" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-yellow-400 mt-2 border border-yellow-500/20 bg-yellow-500/5">
-            <Shield size={18} /> Admin Panel
-          </Link>
-        </>
-      )}
 
       <Link to="/settings" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium">
         <Settings size={18} className="text-gray-400" /> Settings
       </Link>
+      
+      {(role === 'admin' || role === 'owner') && (
+        <>
+          <Link to="/broadcast" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-cyan-400 mt-4 border border-cyan-500/20 bg-cyan-500/5">
+            <Play size={18} /> Broadcasts
+          </Link>
+          <Link to="/users" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-purple-400 mt-2 border border-purple-500/20 bg-purple-500/5">
+            <Users size={18} /> Manage Users
+          </Link>
+          <Link to="/manage-games" className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/10 transition-all text-sm font-medium text-steam-blue mt-2 border border-steam-blue/20 bg-steam-blue/5">
+            <Gamepad2 size={18} /> Manage Games
+          </Link>
+        </>
+      )}
       <div className="text-[10px] text-gray-500/50 uppercase tracking-widest text-center mt-auto mb-1 select-none cursor-default">
         Develop by Zamir
       </div>

@@ -15,6 +15,11 @@ router.use(authenticate)
 // Get all global accounts
 router.get('/', async (req: AuthRequest, res) => {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { selectiveAccesses: true }
+    })
+
     const accounts = await prisma.account.findMany({
       orderBy: { created_at: 'desc' },
       include: {
@@ -29,11 +34,27 @@ router.get('/', async (req: AuthRequest, res) => {
       const inLibrary = acc.usersInLibrary.length > 0
       const { usersInLibrary, ...baseAcc } = acc
 
-      if (req.role !== 'admin' && req.role !== 'owner') {
-        const { steam_password, ...safeAcc } = baseAcc
-        return { ...safeAcc, inLibrary }
+      let hasAccess = true;
+      let expires_at = null;
+
+      if (user?.access_plan === 'SELECTIVE' && req.role !== 'admin' && req.role !== 'owner') {
+        const access = user?.selectiveAccesses.find(a => a.account_id === acc.id);
+        if (!access) {
+          hasAccess = false;
+        } else if (access.expires_at && new Date(access.expires_at).getTime() < Date.now()) {
+          hasAccess = false;
+        } else {
+          expires_at = access.expires_at;
+        }
       }
-      return { ...baseAcc, inLibrary }
+
+      const returnedAcc = { ...baseAcc, inLibrary, hasAccess, expires_at };
+
+      if (req.role !== 'admin' && req.role !== 'owner') {
+        const { steam_password, ...safeAcc } = returnedAcc
+        return safeAcc
+      }
+      return returnedAcc
     })
 
     res.json(secureAccounts)
@@ -152,7 +173,19 @@ router.post('/:id/vote', async (req: AuthRequest, res) => {
 // Add to library
 router.post('/:id/library', async (req: AuthRequest, res) => {
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { selectiveAccesses: true }
+    });
     const accountId = parseInt(req.params.id as string)
+
+    if (user?.access_plan === 'SELECTIVE' && req.role !== 'admin' && req.role !== 'owner') {
+      const access = user.selectiveAccesses.find(a => a.account_id === accountId);
+      if (!access || (access.expires_at && new Date(access.expires_at).getTime() < Date.now())) {
+        return res.status(403).json({ error: 'Buy from admin or Owner' });
+      }
+    }
+
     await prisma.user.update({
       where: { id: req.userId },
       data: {
@@ -245,6 +278,20 @@ router.post('/:id/credentials', async (req: AuthRequest, res) => {
 
     if (!account) return res.status(404).json({ error: 'Account not found' })
 
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId },
+      include: { selectiveAccesses: true }
+    });
+
+    let expires_at = null;
+    if (user?.access_plan === 'SELECTIVE' && req.role !== 'admin' && req.role !== 'owner') {
+      const access = user.selectiveAccesses.find(a => a.account_id === account.id);
+      if (!access || (access.expires_at && new Date(access.expires_at).getTime() < Date.now())) {
+        return res.status(403).json({ error: 'Access expired or denied.' });
+      }
+      expires_at = access.expires_at;
+    }
+
     // Log the activity
     await prisma.activityLog.create({
       data: { user_id: req.userId!, action: `Launched Steam as ${account.alias_name}`, account_id: account.id }
@@ -252,7 +299,8 @@ router.post('/:id/credentials', async (req: AuthRequest, res) => {
 
     res.json({ 
       steam_username: account.steam_username, 
-      steam_password: account.steam_password 
+      steam_password: account.steam_password,
+      expires_at
     })
   } catch (error) {
     console.error('Credentials fetch error:', error)

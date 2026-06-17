@@ -51,7 +51,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
         api.get('/auth/profile')
       ])
       
-      const { steam_username, steam_password } = credRes.data
+      const { steam_username, steam_password, expires_at } = credRes.data
       const steamPath = profileRes.data?.steam_path
 
       // 2. Launch Steam LOCALLY using the Electron main process
@@ -61,6 +61,21 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
       if (!result.success) {
         console.error('Failed to launch locally:', result.error)
         alert('Electron Error: ' + result.error)
+      } else {
+        if (expires_at) {
+          const msLeft = new Date(expires_at).getTime() - Date.now();
+          if (msLeft > 0) {
+            setTimeout(async () => {
+              // @ts-ignore
+              if (window.api && window.api.closeSteam) {
+                // @ts-ignore
+                await window.api.closeSteam();
+              }
+              alert("Your session for this game has expired!");
+              window.location.reload();
+            }, msLeft);
+          }
+        }
       }
     } catch (err: any) {
       console.error('Failed to fetch credentials or launch', err)
@@ -127,7 +142,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
               {launchingId === selectedAccount.id ? 'Launching Steam...' : 'Launch Steam'}
             </button>
             
-            {role === 'admin' && (
+            {(role === 'admin' || role === 'owner') && (
               <div className="bg-white/5 border border-white/10 rounded-xl p-4">
                 <h4 className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Admin Details</h4>
                 <p className="text-sm text-gray-300">User: <span className="text-white font-mono">{selectedAccount.steam_username}</span></p>

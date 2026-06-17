@@ -54,7 +54,12 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
     return () => clearInterval(interval)
   }, [banners.length])
 
-  const handleLibraryToggle = async (id: number, inLibrary: boolean) => {
+  const handleLibraryToggle = async (id: number, inLibrary: boolean, hasAccess: boolean) => {
+    if (!hasAccess) {
+      alert("Buy from admin or Owner");
+      return;
+    }
+
     try {
       if (inLibrary) {
         await api.delete(`/accounts/${id}/library`)
@@ -64,9 +69,10 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
         showNotification("Game added to your Library!", "success")
       }
       setAccounts(prev => prev.map(a => a.id === id ? { ...a, inLibrary: !inLibrary } : a))
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to toggle library status", err)
-      showNotification("Failed to update Library", "error")
+      const msg = err.response?.data?.error || "Failed to update Library";
+      showNotification(msg, "error")
     }
   }
 
@@ -180,7 +186,7 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
                 </div>
               ) : (
                 <button 
-                  onClick={(e) => { e.stopPropagation(); handleLibraryToggle(acc.id, false) }}
+                  onClick={(e) => { e.stopPropagation(); handleLibraryToggle(acc.id, false, acc.hasAccess !== false) }}
                   className="absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-20 shadow-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 border border-green-500/30"
                   title="Add to Library"
                 >

@@ -24,12 +24,12 @@ router.get('/', async (req: AuthRequest, res) => {
       }
     })
     
-    // Strip steam_password if requester is NOT an admin
+    // Strip steam_password if requester is NOT an admin or owner
     const secureAccounts = accounts.map(acc => {
       const inLibrary = acc.usersInLibrary.length > 0
       const { usersInLibrary, ...baseAcc } = acc
 
-      if (req.role !== 'admin') {
+      if (req.role !== 'admin' && req.role !== 'owner') {
         const { steam_password, ...safeAcc } = baseAcc
         return { ...safeAcc, inLibrary }
       }
@@ -57,7 +57,7 @@ router.get('/library', async (req: AuthRequest, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' })
 
     const secureAccounts = user.libraryAccounts.map(acc => {
-      if (req.role !== 'admin') {
+      if (req.role !== 'admin' && req.role !== 'owner') {
         const { steam_password, ...safeAcc } = acc
         return { ...safeAcc, inLibrary: true }
       }
@@ -73,8 +73,8 @@ router.get('/library', async (req: AuthRequest, res) => {
 // Create new global steam account (Admin only)
 router.post('/', async (req: AuthRequest, res) => {
   try {
-    if (req.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden: Admins only' })
+    if (req.role !== 'admin' && req.role !== 'owner') {
+      return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
     const { alias_name, steam_username, steam_password, owner_name, description, notes } = req.body
@@ -188,8 +188,8 @@ router.delete('/:id/library', async (req: AuthRequest, res) => {
 // Update global steam account (Admin only)
 router.put('/:id', async (req: AuthRequest, res) => {
   try {
-    if (req.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden: Admins only' })
+    if (req.role !== 'admin' && req.role !== 'owner') {
+      return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
     const { alias_name, steam_username, steam_password, description } = req.body
@@ -217,8 +217,8 @@ router.put('/:id', async (req: AuthRequest, res) => {
 // Delete global steam account (Admin only)
 router.delete('/:id', async (req: AuthRequest, res) => {
   try {
-    if (req.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden: Admins only' })
+    if (req.role !== 'admin' && req.role !== 'owner') {
+      return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
     // Must delete related logs first to avoid foreign key errors, or cascade handle it.

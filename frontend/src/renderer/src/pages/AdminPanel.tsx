@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api'
 import SkeletonRow from '../components/SkeletonRow'
 
-const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
+const AdminPanel = ({ role: currentUserRole, searchQuery }: { role: string, searchQuery: string }) => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [role, setRole] = useState('user')
+  const [formRole, setFormRole] = useState('user')
   const [userMsg, setUserMsg] = useState('')
   
   const [accounts, setAccounts] = useState<any[]>([])
@@ -59,15 +59,15 @@ const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
     setError('')
     try {
       if (editingUserId) {
-        await api.put(`/auth/users/${editingUserId}`, { username, password, role })
+        await api.put(`/auth/users/${editingUserId}`, { username, password, role: formRole })
         setUserMsg(`User updated successfully!`)
       } else {
-        await api.post('/auth/create-user', { username, password, role })
+        await api.post('/auth/create-user', { username, password, role: formRole })
         setUserMsg(`User ${username} created successfully!`)
       }
       setUsername('')
       setPassword('')
-      setRole('user')
+      setFormRole('user')
       setEditingUserId(null)
       setShowUserForm(false)
       fetchUsers()
@@ -80,7 +80,7 @@ const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
     setEditingUserId(user.id)
     setUsername(user.username)
     setPassword('') // Not fetched
-    setRole(user.role)
+    setFormRole(user.role)
     setUserMsg('')
     setShowUserForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -236,13 +236,13 @@ const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
                 <div>
                   <label className="text-xs text-gray-400 mb-1 block">Role</label>
                   <select 
-                    value={role} 
-                    onChange={e => setRole(e.target.value)} 
+                    value={formRole} 
+                    onChange={e => setFormRole(e.target.value)} 
                     disabled={editingUserId ? appUsers.find(u => u.id === editingUserId)?.isDefaultAdmin : false}
                     className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-yellow-500/50 disabled:opacity-50"
                   >
                     <option value="user">User</option>
-                    <option value="admin">Admin</option>
+                    {currentUserRole === 'owner' && <option value="admin">Admin</option>}
                   </select>
                 </div>
                 <div className="flex gap-2 mt-2">
@@ -250,7 +250,7 @@ const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
                     {editingUserId ? 'Save Changes' : 'Create User'}
                   </button>
                   {editingUserId && (
-                    <button type="button" onClick={() => { setEditingUserId(null); setUsername(''); setPassword(''); setRole('user'); setShowUserForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
+                    <button type="button" onClick={() => { setEditingUserId(null); setUsername(''); setPassword(''); setFormRole('user'); setShowUserForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
                       Cancel
                     </button>
                   )}
@@ -334,8 +334,10 @@ const AdminPanel = ({ searchQuery }: { searchQuery: string }) => {
                     <td className="px-4 py-3">{u.username}</td>
                     <td className="px-4 py-3 capitalize">{u.role}</td>
                     <td className="px-4 py-3 text-right">
-                      <button onClick={() => handleEditUserClick(u)} className="text-yellow-500 hover:text-yellow-400 mr-3">Edit</button>
-                      {!u.isDefaultAdmin && !u.isSelf && (
+                      {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
+                        <button onClick={() => handleEditUserClick(u)} className="text-yellow-500 hover:text-yellow-400 mr-3">Edit</button>
+                      )}
+                      {!u.isDefaultAdmin && !u.isSelf && ((currentUserRole === 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
                         <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400">Delete</button>
                       )}
                     </td>

@@ -29,14 +29,19 @@ router.post('/login', async (req, res) => {
 // Admin-only Create User Route
 router.post('/create-user', authenticate, async (req: AuthRequest, res) => {
   try {
-    // Check if the requester is an admin
+    // Check if the requester is an admin or owner
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') {
-      return res.status(403).json({ error: 'Forbidden: Admins only' })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) {
+      return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
     const { username, password, role } = req.body
     if (!username || !password) return res.status(400).json({ error: 'Missing fields' })
+
+    if (role === 'owner') return res.status(403).json({ error: 'Cannot create owner accounts' })
+    if (requester.role === 'admin' && role !== 'user' && role !== undefined) {
+      return res.status(403).json({ error: 'Admins can only create users' })
+    }
 
     const existingUser = await prisma.user.findUnique({ where: { username } })
     if (existingUser) return res.status(400).json({ error: 'Username already exists' })
@@ -56,14 +61,9 @@ router.post('/create-user', authenticate, async (req: AuthRequest, res) => {
 router.get('/users', authenticate, async (req: AuthRequest, res) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
-    
-    const defaultAdminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'zamir'
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     const users = await prisma.user.findMany({ 
-      where: {
-        username: { not: defaultAdminUsername }
-      },
       select: { id: true, username: true, role: true, created_at: true } 
     })
     
@@ -80,7 +80,7 @@ router.get('/users', authenticate, async (req: AuthRequest, res) => {
 router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     const id = parseInt(req.params.id as string)
     const { username, password, role } = req.body
@@ -88,9 +88,16 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
     const userToUpdate = await prisma.user.findUnique({ where: { id } })
     if (!userToUpdate) return res.status(404).json({ error: 'User not found' })
 
+    if (requester.role === 'admin') {
+      if (userToUpdate.role !== 'user') return res.status(403).json({ error: 'Admins can only edit normal users' })
+      if (role && role !== 'user') return res.status(403).json({ error: 'Admins can only assign user role' })
+    }
+
+    if (role === 'owner' && userToUpdate.role !== 'owner') return res.status(403).json({ error: 'Cannot create another owner' })
+
     const defaultAdminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'zamir'
-    if (userToUpdate.username === defaultAdminUsername && role !== 'admin') {
-      return res.status(400).json({ error: 'Cannot remove admin role from default admin' })
+    if (userToUpdate.username === defaultAdminUsername && role && role !== 'owner') {
+      return res.status(400).json({ error: 'Cannot remove owner role from default owner' })
     }
 
     const updateData: any = { username, role }
@@ -110,7 +117,7 @@ router.put('/users/:id', authenticate, async (req: AuthRequest, res) => {
 router.delete('/users/:id', authenticate, async (req: AuthRequest, res) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
 
     const id = parseInt(req.params.id as string)
     if (id === req.userId) return res.status(400).json({ error: 'Cannot delete yourself' })
@@ -118,9 +125,13 @@ router.delete('/users/:id', authenticate, async (req: AuthRequest, res) => {
     const userToDelete = await prisma.user.findUnique({ where: { id } })
     if (!userToDelete) return res.status(404).json({ error: 'User not found' })
 
+    if (requester.role === 'admin' && userToDelete.role !== 'user') {
+      return res.status(403).json({ error: 'Admins can only delete normal users' })
+    }
+
     const defaultAdminUsername = process.env.DEFAULT_ADMIN_USERNAME || 'zamir'
     if (userToDelete.username === defaultAdminUsername) {
-      return res.status(400).json({ error: 'Cannot delete the default admin user' })
+      return res.status(400).json({ error: 'Cannot delete the owner user' })
     }
 
     await prisma.user.delete({ where: { id } })

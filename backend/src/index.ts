@@ -33,10 +33,16 @@ const seedDatabase = async () => {
     import('bcrypt').then(async (bcrypt) => {
       const password_hash = await bcrypt.hash(defaultAdminPassword, 10)
       await prisma.user.create({
-        data: { username: defaultAdminUsername, password_hash, role: 'admin' }
+        data: { username: defaultAdminUsername, password_hash, role: 'owner' }
       })
-      console.log(`Default admin user (${defaultAdminUsername}) created.`)
+      console.log(`Default owner user (${defaultAdminUsername}) created.`)
     })
+  } else if (existingAdmin.role !== 'owner') {
+    await prisma.user.update({
+      where: { id: existingAdmin.id },
+      data: { role: 'owner' }
+    })
+    console.log(`Default user (${defaultAdminUsername}) upgraded to owner.`)
   }
 }
 

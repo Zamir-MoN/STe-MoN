@@ -2,6 +2,7 @@ import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcrypt'
 import { generateToken } from '../utils/jwt'
+import { broadcast } from './stream'
 import { authenticate, AuthRequest } from '../middleware/auth'
 
 const router = Router()
@@ -212,6 +213,8 @@ router.delete('/users/:id/selective-access/:accountId', authenticate, async (req
       where: { id: user_id },
       data: { libraryAccounts: { disconnect: { id: account_id } } }
     })
+    
+    broadcast({ type: 'REVOKE_ACCESS', payload: { user_id, account_id } })
     res.json({ message: 'Access revoked' })
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })

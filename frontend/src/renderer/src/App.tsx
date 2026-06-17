@@ -110,6 +110,23 @@ function App() {
       } else if (data.type === 'NEW_BANNER') {
         window.dispatchEvent(new Event('refresh_banner'))
         showNotification("A new upcoming game broadcast is live!", 'info')
+      } else if (data.type === 'REVOKE_ACCESS') {
+        const token = localStorage.getItem('steamhub_token');
+        let myUserId = null;
+        if (token) {
+          try {
+            myUserId = JSON.parse(atob(token.split('.')[1])).userId || JSON.parse(atob(token.split('.')[1])).id;
+          } catch(e) {}
+        }
+        if (myUserId === data.payload.user_id) {
+          // @ts-ignore
+          if (window.api && window.api.closeSteam) {
+            // @ts-ignore
+            window.api.closeSteam();
+            showNotification("Your access to a game was revoked. Steam has been closed.", 'error');
+            window.dispatchEvent(new Event('refresh_accounts'));
+          }
+        }
       }
     }
     return () => sse.close()

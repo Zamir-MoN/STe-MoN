@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Suspense, lazy, useMemo } from 'react'
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
+import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Gamepad2, X } from 'lucide-react'
 
@@ -43,9 +43,9 @@ const AnimatedRoutes = ({ role, showNotification, searchQuery }: { role: string,
       <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><div className="animate-pulse flex flex-col items-center"><div className="w-10 h-10 border-4 border-steam-blue border-t-transparent rounded-full animate-spin"></div><div className="mt-4 text-steam-blue font-semibold tracking-widest">LOADING MODULE...</div></div></div>}>
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageTransition><Dashboard role={role} showNotification={showNotification} searchQuery={searchQuery} /></PageTransition>} />
-          <Route path="/users" element={<PageTransition><UserManagement role={role} /></PageTransition>} />
-          <Route path="/manage-games" element={<PageTransition><GameManagement searchQuery={searchQuery} /></PageTransition>} />
-          <Route path="/broadcast" element={<PageTransition><BroadcastPanel role={role} /></PageTransition>} />
+          <Route path="/users" element={role === 'admin' || role === 'owner' ? <PageTransition><UserManagement role={role} /></PageTransition> : <Navigate to="/" replace />} />
+          <Route path="/manage-games" element={role === 'admin' || role === 'owner' ? <PageTransition><GameManagement searchQuery={searchQuery} /></PageTransition> : <Navigate to="/" replace />} />
+          <Route path="/broadcast" element={role === 'admin' || role === 'owner' ? <PageTransition><BroadcastPanel role={role} /></PageTransition> : <Navigate to="/" replace />} />
           <Route path="/accounts" element={<PageTransition><AccountsPage role={role} showNotification={showNotification} searchQuery={searchQuery} /></PageTransition>} />
           <Route path="/settings" element={<PageTransition><SettingsPage showNotification={showNotification} /></PageTransition>} />
         </Routes>

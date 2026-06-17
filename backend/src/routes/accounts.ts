@@ -78,7 +78,7 @@ router.get('/library', async (req: AuthRequest, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' })
 
-    const secureAccounts = user.libraryAccounts.map(acc => {
+    const secureAccounts = user.libraryAccounts.reduce((accList, acc) => {
       let hasAccess = true;
       let expires_at = null;
       let plan_tag = user.access_plan;
@@ -94,14 +94,19 @@ router.get('/library', async (req: AuthRequest, res) => {
         }
       }
 
+      // Filter out games they no longer have access to
+      if (!hasAccess) return accList;
+
       const returnedAcc = { ...acc, inLibrary: true, hasAccess, expires_at, plan_tag };
 
       if (req.role !== 'admin' && req.role !== 'owner') {
         const { steam_password, ...safeAcc } = returnedAcc;
-        return safeAcc;
+        accList.push(safeAcc);
+      } else {
+        accList.push(returnedAcc);
       }
-      return returnedAcc;
-    })
+      return accList;
+    }, []);
 
     res.json(secureAccounts)
   } catch (error) {

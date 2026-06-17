@@ -206,6 +206,12 @@ router.delete('/users/:id/selective-access/:accountId', authenticate, async (req
     await prisma.userSelectiveAccess.deleteMany({
       where: { user_id, account_id }
     })
+    
+    // Also remove it from their library automatically
+    await prisma.user.update({
+      where: { id: user_id },
+      data: { libraryAccounts: { disconnect: { id: account_id } } }
+    })
     res.json({ message: 'Access revoked' })
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })

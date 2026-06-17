@@ -335,16 +335,21 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                           <button 
                             onClick={async () => {
                               try {
-                                const newPlan = u.access_plan === 'SELECTIVE' ? 'FULL' : 'SELECTIVE';
-                                await api.put(`/auth/users/${u.id}`, { access_plan: newPlan });
-                                fetchUsers();
-                                if (newPlan === 'SELECTIVE') handleEditUserClick(u); // Open editor to grant games
+                                if (u.access_plan === 'SELECTIVE') {
+                                  // Just open editor to manage games
+                                  handleEditUserClick(u);
+                                } else {
+                                  // Change to SELECTIVE and open editor
+                                  await api.put(`/auth/users/${u.id}`, { access_plan: 'SELECTIVE' });
+                                  fetchUsers();
+                                  handleEditUserClick({ ...u, access_plan: 'SELECTIVE' });
+                                }
                               } catch (err: any) {
                                 setError(err.response?.data?.error || 'Failed to update plan');
                               }
                             }}
                             className={`px-2 py-1 rounded text-xs font-bold transition-all hover:opacity-80 active:scale-95 cursor-pointer ${u.access_plan === 'SELECTIVE' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' : 'bg-green-500/20 text-green-400 border border-green-500/30'}`}
-                            title="Click to toggle plan"
+                            title={u.access_plan === 'SELECTIVE' ? "Manage Selective Access" : "Click to change to Selective Access"}
                           >
                             {u.access_plan || 'FULL'}
                           </button>

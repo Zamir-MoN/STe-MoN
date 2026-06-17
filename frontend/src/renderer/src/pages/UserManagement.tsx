@@ -220,7 +220,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                       onChange={e => setAccessPlan(e.target.value)} 
                       className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50"
                     >
-                      <option value="FULL" className="bg-gray-900 text-white">Full Access (All Games)</option>
+                      <option value="FULL" className="bg-gray-900 text-white">Permanent (All Games)</option>
                       <option value="SELECTIVE" className="bg-gray-900 text-white">Selected Game (Manage manually)</option>
                     </select>
                   </div>

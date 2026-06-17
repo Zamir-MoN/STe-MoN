@@ -137,7 +137,9 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     input.click()
   }
 
-  const filteredAccounts = accounts.filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredAccounts = accounts
+    .filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => (a.alias_name || '').localeCompare(b.alias_name || ''))
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8">
@@ -232,7 +234,14 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                 <tbody>
                   <AnimatePresence>
                   {filteredAccounts.map(acc => (
-                    <motion.tr layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} key={acc.id} className="border-b border-white/5 hover:bg-white/5">
+                    <motion.tr 
+                      initial={{ opacity: 0 }} 
+                      animate={{ opacity: 1 }} 
+                      exit={{ opacity: 0 }} 
+                      transition={{ duration: 0.3, ease: "easeInOut" }} 
+                      key={acc.id} 
+                      className="border-b border-white/5 hover:bg-white/5"
+                    >
                       <td className="px-4 py-3 font-medium text-white">{acc.alias_name}</td>
                       <td className="px-4 py-3">{acc.steam_username}</td>
                       <td className="px-4 py-3 truncate max-w-xs">{acc.description || '-'}</td>

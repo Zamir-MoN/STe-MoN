@@ -76,12 +76,14 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
     }
   }
 
-  const filteredAccounts = accounts.filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredAccounts = accounts
+    .filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
+    .sort((a, b) => (a.alias_name || '').localeCompare(b.alias_name || ''))
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 relative z-10">
       {isLoading ? (
-        <div className="w-full mb-8">
+        <div className="w-full mb-16">
           <h2 className="text-xl font-bold mb-4 text-white uppercase tracking-wider flex items-center gap-2">
             <MonitorPlay className="w-6 h-6 text-cyan-400" />
             Upcoming Games
@@ -89,7 +91,7 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
           <div className="w-full h-64 bg-white/5 animate-pulse rounded-xl border border-white/10"></div>
         </div>
       ) : banners.length > 0 && (
-        <div className="w-full mb-8 relative group">
+        <div className="w-full mb-16 relative group">
           <h2 className="text-xl font-bold mb-4 text-white uppercase tracking-wider flex items-center gap-2">
             <MonitorPlay className="w-6 h-6 text-cyan-400" />
             Upcoming Games
@@ -153,15 +155,14 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
           No games match your search.
         </div>
       ) : (
-        <motion.div layout className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          <AnimatePresence>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          <AnimatePresence mode="popLayout">
           {filteredAccounts.map(acc => (
             <motion.div 
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
               key={acc.id} 
               className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-xl border border-white/10 group hover:border-white/30 transition-all hover:shadow-2xl hover:shadow-black/50"
             >
@@ -210,7 +211,7 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
               </motion.div>
           ))}
           </AnimatePresence>
-        </motion.div>
+        </div>
       )}
     </motion.div>
   )

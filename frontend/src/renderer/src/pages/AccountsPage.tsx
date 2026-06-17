@@ -279,7 +279,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                 </div>
               ) : (
                 <div className="absolute top-3 left-3 bg-black/40 text-green-400 text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-green-500/40">
-                  Full Access
+                  Permanent
                 </div>
               )}
 

@@ -82,7 +82,7 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return
 
-    const sse = new EventSource('http://localhost:3001/api/stream')
+    const sse = new EventSource('http://175.41.159.95:3001/api/stream')
     sse.onmessage = (event) => {
       const data = JSON.parse(event.data)
       if (data.type === 'NEW_GAME') {

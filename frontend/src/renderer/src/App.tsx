@@ -118,7 +118,7 @@ function App() {
             myUserId = JSON.parse(atob(token.split('.')[1])).userId || JSON.parse(atob(token.split('.')[1])).id;
           } catch(e) {}
         }
-        if (myUserId === data.payload.user_id) {
+        if (myUserId == data.payload.user_id) {
           // @ts-ignore
           if (window.api && window.api.closeSteam) {
             // @ts-ignore

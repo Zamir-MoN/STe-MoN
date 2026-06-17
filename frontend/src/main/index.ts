@@ -88,8 +88,15 @@ ipcMain.handle('auto-detect-steam', async () => {
 
 // IPC Handlers for Steam interactions (mock for now)
 ipcMain.handle('check-steam-status', async () => {
-  // TODO: implement actual process detection
-  return { running: false }
+  try {
+    const { exec } = require('child_process')
+    const { promisify } = require('util')
+    const execAsync = promisify(exec)
+    const { stdout } = await execAsync('tasklist /FI "IMAGENAME eq steam.exe" /NH')
+    return { running: stdout.toLowerCase().includes('steam.exe') }
+  } catch (e) {
+    return { running: false }
+  }
 })
 
 ipcMain.handle('launch-steam', async (_, username, password, customPath) => {

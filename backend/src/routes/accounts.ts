@@ -106,7 +106,7 @@ router.get('/library', async (req: AuthRequest, res) => {
         accList.push(returnedAcc);
       }
       return accList;
-    }, []);
+    }, [] as any[]);
 
     res.json(secureAccounts)
   } catch (error) {

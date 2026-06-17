@@ -237,7 +237,7 @@ router.delete('/:id', async (req: AuthRequest, res) => {
   }
 })
 
-router.post('/:id/launch', async (req: AuthRequest, res) => {
+router.post('/:id/credentials', async (req: AuthRequest, res) => {
   try {
     const account = await prisma.account.findUnique({
       where: { id: parseInt(req.params.id as string) }
@@ -245,47 +245,18 @@ router.post('/:id/launch', async (req: AuthRequest, res) => {
 
     if (!account) return res.status(404).json({ error: 'Account not found' })
 
-    // 1. Kill existing Steam process if running
-    try {
-      await execAsync('taskkill /F /IM steam.exe')
-      // Wait a moment for Steam to cleanly shut down its locks
-      await new Promise(resolve => setTimeout(resolve, 2000))
-    } catch (e) {
-      // Ignore error if Steam was not running
-    }
-
-    // 2. Get Steam executable path from Windows Registry
-    let steamPath = 'C:\\Program Files (x86)\\Steam\\steam.exe'
-    try {
-      const { stdout } = await execAsync('powershell -Command "(Get-ItemProperty -Path \'HKCU:\\Software\\Valve\\Steam\').SteamExe"')
-      if (stdout.trim()) {
-        steamPath = stdout.trim()
-      }
-    } catch (e) {
-      console.warn('Could not read Steam registry path, using default')
-    }
-
-    // Normalize path just in case
-    steamPath = steamPath.replace(/\//g, '\\')
-
-    // 3. Launch Steam with auto-login arguments
-    // We use detached spawn so Steam stays open even if backend closes
-    const steamProcess = spawn(steamPath, ['-login', account.steam_username, account.steam_password], {
-      detached: true,
-      stdio: 'ignore'
-    })
-    
-    steamProcess.unref()
-
     // Log the activity
     await prisma.activityLog.create({
       data: { user_id: req.userId!, action: `Launched Steam as ${account.alias_name}`, account_id: account.id }
     })
 
-    res.json({ message: 'Steam launching successfully' })
+    res.json({ 
+      steam_username: account.steam_username, 
+      steam_password: account.steam_password 
+    })
   } catch (error) {
-    console.error('Launch error:', error)
-    res.status(500).json({ error: 'Server error while launching Steam' })
+    console.error('Credentials fetch error:', error)
+    res.status(500).json({ error: 'Server error fetching credentials' })
   }
 })
 

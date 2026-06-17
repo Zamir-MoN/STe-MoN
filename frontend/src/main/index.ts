@@ -92,14 +92,66 @@ ipcMain.handle('check-steam-status', async () => {
   return { running: false }
 })
 
-ipcMain.handle('launch-steam', async () => {
-  // TODO: implement actual steam launching
-  return { success: true }
+ipcMain.handle('launch-steam', async (_, username, password, customPath) => {
+  try {
+    const { exec, spawn } = require('child_process')
+    const { promisify } = require('util')
+    const execAsync = promisify(exec)
+
+    // 1. Kill existing Steam
+    try {
+      await execAsync('taskkill /F /IM steam.exe')
+      await new Promise(r => setTimeout(r, 2000))
+    } catch (e) {}
+
+    // 2. Find Steam Path
+    let steamPath = customPath
+    if (!steamPath) {
+      const commonPaths = [
+        'C:\\Program Files (x86)\\Steam\\steam.exe',
+        'C:\\Program Files\\Steam\\steam.exe',
+        'C:\\Steam\\steam.exe',
+        'D:\\Steam\\steam.exe',
+        'E:\\Steam\\steam.exe'
+      ]
+      const fs = require('fs')
+      for (const p of commonPaths) {
+        try {
+          if (fs.existsSync(p)) {
+            steamPath = p;
+            break;
+          }
+        } catch (e) {}
+      }
+      
+      if (!steamPath) {
+        steamPath = 'C:\\Program Files (x86)\\Steam\\steam.exe'
+      }
+    }
+
+    // 3. Launch Steam
+    const steamProcess = spawn(steamPath, ['-login', username, password], {
+      detached: true,
+      stdio: 'ignore'
+    })
+    steamProcess.unref()
+    return { success: true }
+  } catch (err: any) {
+    console.error('Failed to launch steam', err)
+    return { success: false, error: err.message }
+  }
 })
 
 ipcMain.handle('close-steam', async () => {
-  // TODO: implement actual steam killing
-  return { success: true }
+  try {
+    const { exec } = require('child_process')
+    const { promisify } = require('util')
+    const execAsync = promisify(exec)
+    await execAsync('taskkill /F /IM steam.exe')
+    return { success: true }
+  } catch (e: any) {
+    return { success: false, error: e.message }
+  }
 })
 
 // This method will be called when Electron has finished

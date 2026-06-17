@@ -40,7 +40,7 @@ const seedDatabase = async () => {
   }
 }
 
-app.listen(PORT, async () => {
+app.listen(PORT as number, '0.0.0.0', async () => {
   await seedDatabase()
   console.log(`Backend server listening on port ${PORT}`)
 })

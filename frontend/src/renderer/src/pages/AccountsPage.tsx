@@ -45,10 +45,27 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
   const handleLaunch = async (id: number) => {
     setLaunchingId(id)
     try {
-      await api.post(`/accounts/${id}/launch`)
-    } catch (err) {
-      console.error('Failed to launch steam', err)
-      alert('Failed to launch Steam. Make sure it is installed.')
+      // 1. Fetch the credentials from the remote VPS
+      const [credRes, profileRes] = await Promise.all([
+        api.post(`/accounts/${id}/credentials`),
+        api.get('/auth/profile')
+      ])
+      
+      const { steam_username, steam_password } = credRes.data
+      const steamPath = profileRes.data?.steam_path
+
+      // 2. Launch Steam LOCALLY using the Electron main process
+      // @ts-ignore
+      const result = await window.api.launchSteam(steam_username, steam_password, steamPath)
+      
+      if (!result.success) {
+        console.error('Failed to launch locally:', result.error)
+        alert('Electron Error: ' + result.error)
+      }
+    } catch (err: any) {
+      console.error('Failed to fetch credentials or launch', err)
+      const msg = err.response?.data?.error || err.message || 'Unknown error'
+      alert('API Error: ' + msg)
     } finally {
       setTimeout(() => setLaunchingId(null), 2000)
     }

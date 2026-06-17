@@ -24,7 +24,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: Response) => {
 router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') {
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) {
       return res.status(403).json({ error: 'Forbidden' })
     }
     
@@ -54,7 +54,7 @@ router.post('/', authenticate, async (req: AuthRequest, res: Response) => {
 router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     const { image_url, zoom_size, alignment } = req.body
     if (!image_url) return res.status(400).json({ error: 'Image URL is required' })
@@ -77,7 +77,7 @@ router.put('/:id', authenticate, async (req: AuthRequest, res: Response) => {
 router.delete('/:id', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const requester = await prisma.user.findUnique({ where: { id: req.userId } })
-    if (!requester || requester.role !== 'admin') return res.status(403).json({ error: 'Forbidden' })
+    if (!requester || (requester.role !== 'admin' && requester.role !== 'owner')) return res.status(403).json({ error: 'Forbidden' })
     
     await prisma.banner.delete({ where: { id: parseInt(req.params.id as string) } })
     

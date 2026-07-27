@@ -20,24 +20,8 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash)
     if (!match) return res.status(400).json({ error: 'Invalid credentials' })
 
-    // HWID Check (skip owner)
-    if (user.role !== 'owner') {
-      if (!hwid || hwid === 'UNKNOWN-HWID') {
-        return res.status(400).json({ error: 'Could not determine device ID' })
-      }
-      if (!user.hwid) {
-        // First login -> bind to this device
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { hwid }
-        })
-      } else if (user.hwid !== hwid) {
-        return res.status(403).json({ error: 'This account is bound to another device. Contact an admin to reset your device bind.' })
-      }
-    }
-
     const token = generateToken(user.id)
-    res.json({ token, user: { id: user.id, username: user.username, role: user.role, hwid: user.hwid || hwid } })
+    res.json({ token, user: { id: user.id, username: user.username, role: user.role } })
   } catch (error) {
     res.status(500).json({ error: 'Server error' })
   }

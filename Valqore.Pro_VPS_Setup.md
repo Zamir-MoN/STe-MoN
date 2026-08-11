@@ -54,7 +54,7 @@ Paste the following (modify if needed):
 # Change connection string if using PostgreSQL, else it might default to SQLite via schema
 DATABASE_URL="postgresql://postgres:password@localhost:5432/steam_hub?schema=public"
 JWT_SECRET="your-secure-jwt-secret-key"
-PORT=3001
+PORT=4050
 
 DEFAULT_ADMIN_USERNAME="zamir"
 DEFAULT_ADMIN_PASSWORD="your_secure_password"
@@ -90,7 +90,7 @@ pm2 save
 Ensure that the frontend client (`frontend/src/renderer/src/api.ts`) points to your new VPS IP address:
 ```typescript
 const api = axios.create({
-  baseURL: 'http://<YOUR_VPS_IP>:3001/api',
+  baseURL: 'http://<YOUR_VPS_IP>:4050/api',
   // ...
 })
 ```

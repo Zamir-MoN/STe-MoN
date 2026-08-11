@@ -1,6 +1,6 @@
-# STe-MoN (Steam Mon) VPS Setup Guide
+# Valqore.Pro VPS Setup Guide
 
-This guide provides step-by-step instructions for deploying the backend of the STe-MoN project to a Linux VPS (e.g., Ubuntu 20.04/22.04 or Debian).
+This guide provides step-by-step instructions for deploying the backend of the Valqore.Pro project to a Linux VPS (e.g., Ubuntu 20.04/22.04 or Debian).
 
 ## Prerequisites
 - A Linux VPS with root or sudo access.
@@ -29,18 +29,18 @@ sudo npm install -g pm2
 
 ## 4. Clone or Upload the Project
 Upload the project files to your VPS. You can use `scp`, `rsync`, or clone a Git repository.
-For this guide, assume the project is placed in `~/STe-MoN`.
+For this guide, assume the project is placed in `~/Valqore.Pro`.
 
 ```bash
 # Example if using git
-git clone <your-repo-url> ~/STe-MoN
-cd ~/STe-MoN/backend
+git clone <your-repo-url> ~/Valqore.Pro
+cd ~/Valqore.Pro/backend
 ```
 
 ## 5. Install Backend Dependencies
 Install the required Node.js packages for the backend.
 ```bash
-cd ~/STe-MoN/backend
+cd ~/Valqore.Pro/backend
 npm install
 ```
 
@@ -77,7 +77,7 @@ npm run build
 ## 9. Start the Server using PM2
 Run the compiled code in the background using PM2.
 ```bash
-pm2 start dist/index.js --name "stemon-backend"
+pm2 start dist/index.js --name "valqore-pro-backend"
 ```
 To ensure PM2 starts automatically on server reboot:
 ```bash

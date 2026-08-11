@@ -1,7 +1,7 @@
-# STe-MoN (Steam Mon) Documentation
+# Valqore.Pro Documentation
 
 ## Project Overview
-STe-MoN is an application designed to manage and interact with Steam accounts and related data. The system follows a client-server architecture, consisting of a central backend API running on a server and a desktop client application used by end-users.
+Valqore.Pro is an application designed to manage and interact with Steam accounts and related data. The system follows a client-server architecture, consisting of a central backend API running on a server and a desktop client application used by end-users.
 
 ### Architecture
 1. **Backend**: A Node.js and Express REST API handling authentication, account management, streaming data, and activity logging. It utilizes Prisma as its Object-Relational Mapper (ORM) to interact with the database (configured for SQLite by default, but adaptable to PostgreSQL).

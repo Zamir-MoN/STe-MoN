@@ -13,6 +13,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   const [steamPass, setSteamPass] = useState('')
   const [steamDesc, setSteamDesc] = useState('')
   const [price, setPrice] = useState('') // Used as Image URL
+  const [trailerUrl, setTrailerUrl] = useState('')
   const [isBundle, setIsBundle] = useState(false)
   const [notes, setNotes] = useState('')
   const [accMsg, setAccMsg] = useState('')
@@ -43,11 +44,11 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setError('')
     try {
       if (editingId) {
-        await api.put(`/accounts/${editingId}`, {
+        await api.put(`/accounts/${editingId}`, { 
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price 
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl 
         })
         setAccMsg(`Steam Account '${alias}' updated!`)
         setEditingId(null)
@@ -56,7 +57,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl
         })
         setAccMsg(`Steam Account '${alias}' added globally!`)
       }
@@ -64,6 +65,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
       setSteamUser('')
       setSteamPass('')
       setSteamDesc('')
+      setTrailerUrl('')
       setPrice('')
       setIsBundle(false)
       setNotes('')
@@ -89,6 +91,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setSteamUser(acc.steam_username)
     setSteamPass(acc.steam_password || '')
     setSteamDesc(acc.description || '')
+    setTrailerUrl(acc.trailer_url || '')
     setPrice(acc.owner_name || '')
     setIsBundle(acc.notes ? true : false)
     setNotes(acc.notes || '')
@@ -130,7 +133,8 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
               steam_password: acc.steam_password,
               description: acc.description || '',
               notes: acc.notes || '',
-              owner_name: acc.owner_name || ''
+              owner_name: acc.owner_name || '',
+              trailer_url: acc.trailer_url || ''
             })
           }
           await fetchAccounts()
@@ -201,8 +205,8 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                       <input type="text" value={alias} onChange={e => setAlias(e.target.value)} required placeholder={isBundle ? "e.g. Action Starter Pack" : "e.g. CS:GO Smurf"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                     </div>
                     <div className="col-span-1">
-                      <label className="text-xs text-gray-400 mb-1 block">Price</label>
-                      <input type="text" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 49.99" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                      <label className="text-xs text-gray-400 mb-1 block">Price (INR)</label>
+                      <input type="text" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 999" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                     </div>
                   </div>
                 </div>
@@ -220,6 +224,10 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                   <label className="text-xs text-gray-400 mb-1 block">{isBundle ? 'Bundle Cover Image Links (Comma Separated URLs)' : 'Game Cover Image Link (URL)'}</label>
                   <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder={isBundle ? "https://ex.com/img1.jpg, https://ex.com/img2.jpg" : "https://example.com/cover.jpg"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                 </div>
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">YouTube Trailer Link (URL)</label>
+                  <input type="text" value={trailerUrl} onChange={e => setTrailerUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                </div>
                 {isBundle && (
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Bundle Description (List included games)</label>
@@ -231,7 +239,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     {editingId ? 'Save Changes' : 'Add Global Account'}
                   </button>
                   {editingId && (
-                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setPrice(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
+                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setTrailerUrl(''); setPrice(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
                       Cancel
                     </button>
                   )}

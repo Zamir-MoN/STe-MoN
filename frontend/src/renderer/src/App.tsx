@@ -70,7 +70,7 @@ function App() {
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false)
   const [notificationHistory, setNotificationHistory] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
-  const [currency, setCurrency] = useState('USDT')
+  const [currency, setCurrency] = useState('INR')
   const [showSplash, setShowSplash] = useState(true)
 
   const unreadCount = notificationHistory.filter(n => !n.read).length

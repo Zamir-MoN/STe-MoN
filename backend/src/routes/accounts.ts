@@ -121,7 +121,7 @@ router.post('/', async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
-    const { alias_name, steam_username, steam_password, owner_name, description, notes } = req.body
+    const { alias_name, steam_username, steam_password, owner_name, description, notes, trailer_url } = req.body
     if (!alias_name || !steam_username || !steam_password) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
@@ -133,7 +133,8 @@ router.post('/', async (req: AuthRequest, res) => {
         steam_password,
         owner_name,
         description,
-        notes
+        notes,
+        trailer_url
       }
     })
     
@@ -248,7 +249,7 @@ router.put('/:id', async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
-    const { alias_name, steam_username, steam_password, description, owner_name, notes } = req.body
+    const { alias_name, steam_username, steam_password, description, owner_name, notes, trailer_url } = req.body
     const account = await prisma.account.update({
       where: { id: parseInt(req.params.id as string) },
       data: {
@@ -257,7 +258,8 @@ router.put('/:id', async (req: AuthRequest, res) => {
         steam_password,
         description,
         owner_name,
-        notes
+        notes,
+        trailer_url
       }
     })
 

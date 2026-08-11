@@ -4,19 +4,24 @@ import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api'
 import SkeletonCard from '../components/SkeletonCard'
 
-const Dashboard = ({ role, showNotification, searchQuery, currency = 'USDT' }: { role: string, showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void, searchQuery: string, currency?: string }) => {
+const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { role: string, showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void, searchQuery: string, currency?: string }) => {
   const formatPrice = (priceStr: string | null) => {
     if (!priceStr) return 'Free';
     const num = parseFloat(priceStr);
     if (isNaN(num)) return priceStr;
-    if (currency === 'INR') return '₹' + (num * 83.5).toFixed(0);
-    return '$' + num.toFixed(2);
+    if (currency === 'INR') return '₹' + num.toFixed(0);
+    return 'USDT ' + (num / 83.5).toFixed(2);
   };
   const [accounts, setAccounts] = useState<any[]>([])
   const [selectedAccount, setSelectedAccount] = useState<any | null>(null)
   const [banners, setBanners] = useState<any[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeMedia, setActiveMedia] = useState<number>(0)
+
+  useEffect(() => {
+    setActiveMedia(0)
+  }, [selectedAccount?.id])
 
   const fetchAccounts = async () => {
     try {
@@ -103,175 +108,222 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'USDT' }: {
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Left Column: Cover Art */}
-          <div className="w-full lg:w-[30%] flex flex-col gap-6">
-            <div className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-2xl border border-white/10">
-              <div className="absolute top-4 left-4 z-20 bg-red-500 text-white font-bold px-3 py-1 text-sm rounded shadow-lg shadow-red-500/20">-20% OFF</div>
-              {selectedAccount.description ? (
-                <img 
-                  src={(selectedAccount.description || '').split(',')[0].trim()} 
-                  alt={selectedAccount.alias_name} 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
-                  <Gamepad2 size={64} className="text-white/20" />
+        <h1 className="text-3xl lg:text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
+          <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
+          {selectedAccount.alias_name} FREE ACCOUNT
+        </h1>
+
+        <div className="flex flex-col gap-6 lg:gap-12 mb-12">
+          {/* Top Section */}
+          <div className="flex flex-col lg:flex-row gap-8">
+            {/* Left Column: Media */}
+            <div className="w-full lg:w-[65%] flex flex-col gap-4">
+              <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative">
+                {(() => {
+                  const hasTrailer = !!selectedAccount.trailer_url;
+                  const images = (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url);
+                  
+                  if (hasTrailer && activeMedia === 0) {
+                    const match = selectedAccount.trailer_url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&mute=1&loop=1&playlist=${match[2]}` : null;
+                    return embedUrl ? (
+                      <iframe src={embedUrl} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
+                        <p className="text-gray-500 font-bold">Invalid YouTube URL</p>
+                      </div>
+                    );
+                  } else {
+                    const imageIndex = hasTrailer ? activeMedia - 1 : activeMedia;
+                    const imageUrl = images[imageIndex];
+                    if (imageUrl) {
+                      return <img src={imageUrl} alt={selectedAccount.alias_name} className="w-full h-full object-cover" />;
+                    } else {
+                      return (
+                        <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
+                          <Gamepad2 size={64} className="text-white/20" />
+                        </div>
+                      );
+                    }
+                  }
+                })()}
+              </div>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {selectedAccount.trailer_url && (
+                  <div 
+                    onClick={() => setActiveMedia(0)}
+                    className={`min-w-[120px] w-[120px] aspect-video bg-black rounded-lg border ${activeMedia === 0 ? 'border-valqore-accent shadow-lg shadow-valqore-accent/20' : 'border-white/20'} overflow-hidden cursor-pointer hover:border-valqore-accent transition-colors relative group`}
+                  >
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40"><Play className={`transition-colors ${activeMedia === 0 ? 'text-valqore-accent' : 'text-white group-hover:text-valqore-accent'}`} size={24}/></div>
+                    {/* Optionally try to fetch a yt thumbnail, but showing the first game image with a play icon works too */}
+                    {selectedAccount.description && <img src={(selectedAccount.description || '').split(',')[0].trim()} alt="trailer thumbnail" className="w-full h-full object-cover opacity-50" />}
+                  </div>
+                )}
+                {selectedAccount.description?.split(',').map((url: string, i: number) => {
+                  const mediaIndex = selectedAccount.trailer_url ? i + 1 : i;
+                  return (
+                    <div 
+                      key={mediaIndex} 
+                      onClick={() => setActiveMedia(mediaIndex)}
+                      className={`min-w-[120px] w-[120px] aspect-video bg-black rounded-lg border ${activeMedia === mediaIndex ? 'border-valqore-accent shadow-lg shadow-valqore-accent/20' : 'border-white/20'} overflow-hidden cursor-pointer hover:border-valqore-accent transition-colors relative group`}
+                    >
+                      <img src={url.trim()} alt="thumbnail" className="w-full h-full object-cover" />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Column: Buy Panel */}
+            <div className="w-full lg:w-[35%] flex flex-col gap-4">
+              <div className="bg-[#111111] border border-white/5 rounded-xl p-6 shadow-xl relative overflow-hidden">
+                <div className="flex justify-between items-center mb-6">
+                  <div className="flex gap-2">
+                    <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">ACTION</span>
+                    <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">PLAYSTATION</span>
+                  </div>
+                  <span className="bg-red-500 text-white font-bold px-2 py-1 text-[10px] rounded">-15% OFF</span>
                 </div>
-              )}
+                
+                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Your Price</p>
+                <div className="mb-6 flex items-end gap-3">
+                  <span className="text-white font-black text-3xl">{selectedAccount.owner_name ? formatPrice(selectedAccount.owner_name) : 'Free'}</span>
+                  {selectedAccount.owner_name && (
+                    <span className="text-gray-500 font-bold line-through mb-1">{formatPrice((parseFloat(selectedAccount.owner_name) * 1.15).toString())}</span>
+                  )}
+                </div>
+
+                {inLibrary ? (
+                  <button disabled className="w-full bg-gray-600 text-white font-black py-3 rounded-lg text-sm flex items-center justify-center gap-3 mb-3 cursor-not-allowed">
+                    ALREADY IN LIBRARY
+                  </button>
+                ) : (
+                  <button onClick={async () => {
+                      await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
+                      setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
+                    }} className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-3 rounded-lg text-sm transition-all flex items-center justify-center mb-3">
+                    BUY NOW
+                  </button>
+                )}
+
+                <button className="w-full bg-transparent border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 mb-6">
+                  <span className="text-gray-400 text-lg">♡</span> Add to Wishlist
+                </button>
+
+                <div className="flex items-center justify-between border-t border-white/5 pt-4 pb-4 mb-4">
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Secure Payments</p>
+                  <div className="flex gap-2">
+                     <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-400 font-bold border border-white/5 shadow-sm">UPI</div>
+                     <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-400 font-bold border border-white/5 shadow-sm">T</div>
+                  </div>
+                </div>
+
+                <table className="w-full text-left text-[10px] text-gray-400">
+                  <tbody>
+                    <tr><td className="py-1.5">Developer</td><td className="text-right font-bold text-white">Santa Monica Studio</td></tr>
+                    <tr><td className="py-1.5">Release Date</td><td className="text-right font-bold text-white">11/9/2022</td></tr>
+                    <tr><td className="py-1.5">Platform</td><td className="text-right font-bold text-white">PlayStation<br/>Windows</td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex gap-3">
+                <button className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                  <ThumbsUp size={14} /> {selectedAccount.working_votes || 0}
+                </button>
+                <button className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                  <ThumbsDown size={14} /> {selectedAccount.not_working_votes || 0}
+                </button>
+                <button className="flex items-center justify-center bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg transition-colors border border-white/5">
+                  <Link size={14} />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Middle Column: Details & Action */}
-          <div className="w-full lg:w-[45%] flex flex-col">
-            <h1 className="text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
-              <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
-              {selectedAccount.alias_name} DETAILS
-            </h1>
-
-            <div className="bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl mb-6">
-              <div className="flex gap-2 mb-4">
-                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">RPG</span>
-                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">WINDOWS</span>
+          {/* Bottom Section: System Requirements */}
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8">
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+              System Requirements
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+              <div>
+                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Minimum</h3>
+                <ul className="text-xs text-gray-300 space-y-2 font-medium">
+                  <li>Requires a 64-bit processor and operating system</li>
+                  <li><span className="font-bold text-white">OS:</span> Windows 10 20H1</li>
+                  <li><span className="font-bold text-white">PROCESSOR:</span> Intel i5-4670k or AMD Ryzen 3 1200</li>
+                  <li><span className="font-bold text-white">MEMORY:</span> 8 GB RAM</li>
+                  <li><span className="font-bold text-white">GRAPHICS:</span> NVIDIA GTX 1060 (6GB) or AMD RX 5500 XT (8GB)</li>
+                  <li><span className="font-bold text-white">DIRECTX:</span> Version 12</li>
+                  <li><span className="font-bold text-white">STORAGE:</span> 190 GB available space</li>
+                </ul>
               </div>
-              
-              {!inLibrary && (
-                <>
-                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Your Price</p>
-                  <div className="mb-6">
-                    <span className="text-white font-black text-4xl">{selectedAccount.owner_name ? `${selectedAccount.owner_name}` : 'Free'}</span>
-                  </div>
-                </>
-              )}
-
-              {inLibrary ? (
-                <button 
-                  disabled
-                  className="w-full bg-gray-600 text-white font-black py-4 rounded-xl text-lg flex items-center justify-center gap-3 shadow-lg mb-3 cursor-not-allowed"
-                >
-                  ALREADY IN LIBRARY
-                </button>
-              ) : (
-                <button 
-                  onClick={async () => {
-                    await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
-                    setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
-                  }}
-                  className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-4 rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg shadow-valqore-accent/20 mb-3 active:scale-[0.98]"
-                >
-                  BUY NOW
-                </button>
-              )}
-
-              <button className="w-full bg-transparent border border-white/20 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mb-6">
-                <span className="text-gray-400">♡</span> Add to Wishlist
-              </button>
-
-              <div className="text-center border-t border-white/10 pt-4">
-                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Secure Payments</p>
-                <div className="flex justify-center gap-4">
-                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">UPI</div>
-                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">T</div>
-                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">L</div>
-                </div>
+              <div>
+                <h3 className="text-[10px] font-bold text-valqore-accent uppercase tracking-widest mb-4">Recommended</h3>
+                <ul className="text-xs text-gray-300 space-y-2 font-medium">
+                  <li>Requires a 64-bit processor and operating system</li>
+                  <li><span className="font-bold text-white">OS:</span> Windows 10 20H1</li>
+                  <li><span className="font-bold text-white">PROCESSOR:</span> Intel i5-8600 or AMD Ryzen 5 3600</li>
+                  <li><span className="font-bold text-white">MEMORY:</span> 16 GB RAM</li>
+                  <li><span className="font-bold text-white">GRAPHICS:</span> NVIDIA RTX 2060 Super or AMD RX 5700</li>
+                  <li><span className="font-bold text-white">DIRECTX:</span> Version 12</li>
+                  <li><span className="font-bold text-white">STORAGE:</span> 190 GB available space</li>
+                </ul>
               </div>
             </div>
+          </div>
 
-            <div className="flex gap-4 mb-8">
-              <button onClick={() => {}} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
-                <ThumbsUp size={18} /> {selectedAccount.working_votes || 0}
-              </button>
-              <button onClick={() => {}} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
-                <ThumbsDown size={18} /> {selectedAccount.not_working_votes || 0}
-              </button>
-            </div>
-
-            {selectedAccount.notes && (
-              <>
-                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-                  <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-                  Included Games
-                </h2>
-                <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 text-gray-300 leading-relaxed text-sm whitespace-pre-line">
-                  {selectedAccount.notes}
-                </div>
-              </>
-            )}
-
+          {/* Bottom Section: Account Details */}
+          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mb-4">
             <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
               <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
               Account Details
             </h2>
-            <div className="grid grid-cols-2 gap-6 mb-8">
-              <div className="flex gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+              <div className="flex gap-4">
                 <div className="mt-1 text-valqore-accent"><Play size={20} /></div>
                 <div>
                   <h4 className="font-bold text-white text-sm">Instant Delivery</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Your account credentials will be emailed to you immediately after verification.</p>
+                  <p className="text-[11px] text-gray-400 mt-1">Your account credentials will be emailed to you immediately after verification.</p>
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
+                <div className="mt-1 text-valqore-accent"><Activity size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Lifetime Warranty</h4>
+                  <p className="text-[11px] text-gray-400 mt-1">Full support provided as long as you follow the account guidelines.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
                 <div className="mt-1 text-valqore-accent"><Users size={20} /></div>
                 <div>
                   <h4 className="font-bold text-white text-sm">Global Access</h4>
-                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Play from anywhere in the world without region restrictions.</p>
+                  <p className="text-[11px] text-gray-400 mt-1">Play from anywhere in the world without region restrictions.</p>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                <div className="mt-1 text-valqore-accent"><Link size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Family Sharing</h4>
+                  <p className="text-[11px] text-gray-400 mt-1">Available for offline mode and family sharing features.</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Right Column: Related News */}
-          <div className="w-full lg:w-[25%] flex flex-col gap-6">
-            <h2 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-              RELATED NEWS
-            </h2>
-
-            {/* Static News Item 1 */}
-            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
-              <div className="h-24 bg-gradient-to-tr from-purple-900 to-indigo-900 relative">
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
-                  <span className="text-[10px] text-gray-500">1 days ago</span>
-                </div>
-                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Stellar Frontiers - Full Premium Account Access Available</h4>
+          {selectedAccount.notes && (
+            <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mb-4">
+              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+                Included Games
+              </h2>
+              <div className="text-gray-300 leading-relaxed text-sm whitespace-pre-line">
+                {selectedAccount.notes}
               </div>
             </div>
-
-            {/* Static News Item 2 */}
-            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
-              <div className="h-24 bg-gradient-to-tr from-green-900 to-emerald-900 relative">
-                <div className="absolute top-2 right-2 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded z-10">TRENDING</div>
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
-                  <span className="text-[10px] text-gray-500">2 months ago</span>
-                </div>
-                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Abyssal Horrors - Full Premium Account Access Available</h4>
-              </div>
-            </div>
-            
-            {/* Static News Item 3 */}
-            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
-              <div className="h-24 bg-gradient-to-tr from-blue-900 to-cyan-900 relative">
-                <div className="absolute top-2 right-2 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded z-10">TRENDING</div>
-                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
-                  <span className="text-[10px] text-gray-500">3 months ago</span>
-                </div>
-                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Velocity X - Full Premium Account Access Available</h4>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </motion.div>
     )

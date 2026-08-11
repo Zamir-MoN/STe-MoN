@@ -33,6 +33,7 @@ model Account {
   owner_name        String?
   description       String?
   notes             String?
+  trailer_url       String?
   favorite          Boolean       @default(false)
   working_votes     Int           @default(0)
   not_working_votes Int           @default(0)

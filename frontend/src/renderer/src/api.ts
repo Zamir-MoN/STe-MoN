@@ -9,7 +9,6 @@ const api = axios.create({
   }
 })
 
-// Add a request interceptor to attach the JWT token
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('steamhub_token')
   if (token) {
@@ -17,5 +16,16 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error("AXIOS ERROR:", error.message, error.code, error.config?.url);
+    if (error.response) {
+      console.error("RESPONSE DATA:", error.response.data);
+    }
+    return Promise.reject(error);
+  }
+)
 
 export default api

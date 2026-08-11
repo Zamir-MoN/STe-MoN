@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Plus, Play, MonitorPlay, AlertTriangle, WifiOff, Download, Upload, ArrowLeft, Gamepad2, Settings, ThumbsUp, ThumbsDown, Minus } from 'lucide-react'
+import { Search, Plus, Play, MonitorPlay, AlertTriangle, WifiOff, Download, Upload, ArrowLeft, Gamepad2, Settings, ThumbsUp, ThumbsDown, Minus, Users } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api'
-import SkeletonRow from '../components/SkeletonRow'
 import SkeletonCard from '../components/SkeletonCard'
 
 const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void, searchQuery: string }) => {
@@ -103,21 +102,23 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
 
   if (selectedAccount) {
     return (
-      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-8 max-w-5xl mx-auto">
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-8 max-w-7xl mx-auto">
         <button 
           onClick={() => setSelectedAccount(null)} 
-          className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition-colors group"
+          className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition-colors group uppercase font-bold text-sm tracking-wider"
         >
-          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back to Library
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
         </button>
 
-        <div className="flex flex-col md:flex-row gap-10">
-          {/* Left Column: Image & Launch */}
-          <div className="w-full md:w-1/3 flex flex-col gap-6">
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Left Column: Cover Art */}
+          <div className="w-full lg:w-[30%] flex flex-col gap-6">
             <div className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-2xl border border-white/10">
+              <div className="absolute top-4 left-4 z-20 bg-red-500 text-white font-bold px-3 py-1 text-sm rounded shadow-lg shadow-red-500/20">-20% OFF</div>
               {selectedAccount.description ? (
                 <img 
-                  src={selectedAccount.description} 
+                  src={(selectedAccount.description || '').split(',')[0].trim()} 
                   alt={selectedAccount.alias_name} 
                   className="w-full h-full object-cover"
                 />
@@ -126,24 +127,113 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                   <Gamepad2 size={64} className="text-white/20" />
                 </div>
               )}
-              {selectedAccount.favorite && (
-                <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-md rounded-full p-2">
-                  <span className="text-yellow-400 drop-shadow">★</span>
+            </div>
+          </div>
+
+          {/* Middle Column: Details & Action */}
+          <div className="w-full lg:w-[45%] flex flex-col">
+            <h1 className="text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
+              <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
+              {selectedAccount.alias_name} DETAILS
+            </h1>
+
+            <div className="bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl mb-6">
+              <div className="flex gap-2 mb-4">
+                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">RPG</span>
+                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">WINDOWS</span>
+              </div>
+              
+
+
+              <button 
+                onClick={() => handleLaunch(selectedAccount.id)}
+                disabled={launchingId === selectedAccount.id}
+                className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-4 rounded-xl text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3 shadow-lg shadow-valqore-accent/20 mb-3 active:scale-[0.98]"
+              >
+                {launchingId === selectedAccount.id ? 'LAUNCHING STEAM...' : 'LAUNCH STEAM'}
+              </button>
+
+              <button className="w-full bg-transparent border border-white/20 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mb-6">
+                <span className="text-gray-400">♡</span> Add to Wishlist
+              </button>
+
+              <div className="text-center border-t border-white/10 pt-4">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Secure Payments</p>
+                <div className="flex justify-center gap-4">
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">UPI</div>
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">T</div>
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">L</div>
                 </div>
-              )}
+              </div>
             </div>
 
-            <button 
-              onClick={() => handleLaunch(selectedAccount.id)}
-              disabled={launchingId === selectedAccount.id}
-              className="w-full bg-transparent border-2 border-white/20 text-white hover:bg-white/10 hover:border-white/40 py-4 rounded-xl font-bold text-lg transition-all disabled:opacity-50 flex items-center justify-center gap-3 transform hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <MonitorPlay size={24} />
-              {launchingId === selectedAccount.id ? 'Launching Steam...' : 'Launch Steam'}
-            </button>
+            <div className="flex gap-4 mb-8">
+              <button onClick={() => handleVote(selectedAccount.id, 'working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
+                <ThumbsUp size={18} /> {selectedAccount.working_votes || 0}
+              </button>
+              <button onClick={() => handleVote(selectedAccount.id, 'not_working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
+                <ThumbsDown size={18} /> {selectedAccount.not_working_votes || 0}
+              </button>
+              <button className="flex items-center justify-center bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
+                <Upload size={18} />
+              </button>
+            </div>
+
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+              Account Details
+            </h2>
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><Play size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Instant Delivery</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Your account credentials will be emailed to you immediately after verification.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><Settings size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Lifetime Warranty</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Full support provided as long as you follow the account guidelines.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><WifiOff size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Global Access</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Play from anywhere in the world without region restrictions.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><Users size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Family Sharing</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Available for offline mode and family sharing features.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-white/10 pt-6 grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Developer</p>
+                <p className="text-sm text-white font-bold">Neon Studios</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Release Date</p>
+                <p className="text-sm text-white font-bold">10/12/2025</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Platform</p>
+                <div className="flex gap-2">
+                  <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">Windows</span>
+                  <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">PlayStation</span>
+                </div>
+              </div>
+            </div>
             
             {(role === 'admin' || role === 'owner') && (
-              <div className="bg-white/5 border border-white/10 rounded-xl p-4">
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mt-8">
                 <h4 className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Admin Details</h4>
                 <p className="text-sm text-gray-300">User: <span className="text-white font-mono">{selectedAccount.steam_username}</span></p>
                 <p className="text-sm text-gray-300 mt-1">Pass: <span className="text-white font-mono blur-sm hover:blur-none transition-all cursor-help">{selectedAccount.steam_password}</span></p>
@@ -151,70 +241,58 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
             )}
           </div>
 
-          {/* Right Column: Details & Instructions */}
-          <div className="w-full md:w-2/3 flex flex-col">
-            <h1 className="text-4xl font-black text-white mb-2 tracking-tight">{selectedAccount.alias_name}</h1>
-            <p className="text-gray-400 mb-8 text-lg">Follow the instructions carefully to play safely.</p>
-
-            <div className="grid grid-cols-1 gap-6">
-              {/* Important Rules */}
-              <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 shadow-lg shadow-red-500/5">
-                <h3 className="text-xl font-bold text-red-400 mb-4 flex items-center gap-2">
-                  <AlertTriangle size={24} /> Important Rules
-                </h3>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="bg-red-500/20 p-2 rounded-lg text-red-400 mt-0.5"><Download size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Download the game.</p>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-red-500/20 p-2 rounded-lg text-red-400 mt-0.5"><MonitorPlay size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Launch the game once in online mode, then close it after 30 seconds <span className="bg-black/50 px-2 py-0.5 rounded text-xs font-mono border border-white/10 text-gray-400 ml-1">ALT + F4</span></p>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-red-500/20 p-2 rounded-lg text-red-400 mt-0.5"><WifiOff size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Set Steam to Offline Mode.</p>
-                  </li>
-                </ul>
+          {/* Right Column: Related News */}
+          <div className="w-full lg:w-[25%] flex flex-col gap-6">
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+              RELATED NEWS
+            </h2>
+            
+            {/* News Card 1 */}
+            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer">
+              <div className="h-32 bg-gray-800 relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
               </div>
-
-              {/* How to Enable Offline Mode */}
-              <div className="bg-steam-blue/10 border border-steam-blue/20 rounded-2xl p-6 shadow-lg shadow-steam-blue/5">
-                <h3 className="text-xl font-bold text-steam-blue mb-4 flex items-center gap-2">
-                  <Settings size={24} /> How to Enable Offline Mode
-                </h3>
-                <ol className="space-y-4">
-                  <li className="flex items-start gap-3">
-                    <div className="bg-steam-blue/20 p-2 rounded-lg text-steam-blue mt-0.5"><MonitorPlay size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Click <strong>Steam</strong> in the top-left corner of the Steam client.</p>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-steam-blue/20 p-2 rounded-lg text-steam-blue mt-0.5"><WifiOff size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Select <strong>"Go Offline"</strong> and confirm.</p>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <div className="bg-steam-blue/20 p-2 rounded-lg text-steam-blue mt-0.5"><Settings size={18} /></div>
-                    <p className="text-gray-200 leading-tight pt-1">Click on <strong>Settings &gt; Cloud</strong> and <strong className="text-red-400">DISABLE</strong> it.</p>
-                  </li>
-                </ol>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
+                  <span className="text-[10px] text-gray-500">1 days ago</span>
+                </div>
+                <h3 className="text-sm font-bold text-white leading-tight">Stellar Frontiers - Full Premium Account Access Available</h3>
               </div>
+            </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl p-6 shadow-lg shadow-white/5 mt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-bold text-white">Does this account work?</h3>
-                  <p className="text-sm text-gray-400">Help others by verifying the status.</p>
+            {/* News Card 2 */}
+            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer relative">
+              <div className="absolute top-2 right-2 z-10 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase">Trending</div>
+              <div className="h-32 bg-gray-800 relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
+                  <span className="text-[10px] text-gray-500">2 months ago</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => handleVote(selectedAccount.id, 'working')} className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/40 text-green-400 px-4 py-2 rounded-lg transition-colors border border-green-500/30">
-                    <ThumbsUp size={18} /> {selectedAccount.working_votes || 0}
-                  </button>
-                  <button onClick={() => handleVote(selectedAccount.id, 'not_working')} className="flex items-center gap-2 bg-red-500/20 hover:bg-red-500/40 text-red-400 px-4 py-2 rounded-lg transition-colors border border-red-500/30">
-                    <ThumbsDown size={18} /> {selectedAccount.not_working_votes || 0}
-                  </button>
+                <h3 className="text-sm font-bold text-white leading-tight">Abyssal Horrors - Full Premium Account Access Available</h3>
+              </div>
+            </div>
+
+            {/* News Card 3 */}
+            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer relative">
+              <div className="absolute top-2 right-2 z-10 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase">Trending</div>
+              <div className="h-32 bg-gray-800 relative">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
+                  <span className="text-[10px] text-gray-500">3 months ago</span>
                 </div>
+                <h3 className="text-sm font-bold text-white leading-tight">Velocity X - Full Premium Account Access Available</h3>
               </div>
             </div>
           </div>
+
         </div>
       </motion.div>
     )
@@ -253,7 +331,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
               {/* Game Cover Image */}
               {acc.description ? (
                 <img 
-                  src={acc.description} 
+                  src={(acc.description || '').split(',')[0].trim()} 
                   alt={acc.alias_name} 
                   className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500"
                 />
@@ -263,25 +341,6 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                 </div>
               )}
               
-              {/* Remove Action Button */}
-              <button 
-                onClick={(e) => handleLibraryRemove(e, acc.id)}
-                className="absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-20 shadow-lg bg-red-500/20 text-red-400 hover:bg-red-500/40 border border-red-500/30 opacity-0 group-hover:opacity-100"
-                title="Remove from Library"
-              >
-                <Minus size={16} />
-              </button>
-
-              {/* Plan Tag */}
-              {acc.plan_tag === 'SELECTIVE' ? (
-                <div className="absolute top-3 left-3 bg-black/40 text-orange-400 text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-orange-500/40">
-                  {acc.expires_at ? `${Math.max(0, Math.ceil((new Date(acc.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} Days Left` : 'Permanent'}
-                </div>
-              ) : (
-                <div className="absolute top-3 left-3 bg-black/40 text-green-400 text-xs font-bold px-2 py-1 rounded backdrop-blur-md z-20 shadow-lg border border-green-500/40">
-                  Permanent
-                </div>
-              )}
 
               {/* Gradient Overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-90 transition-all duration-300"></div>

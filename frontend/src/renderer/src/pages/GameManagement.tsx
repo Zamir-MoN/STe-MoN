@@ -11,7 +11,10 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   const [alias, setAlias] = useState('')
   const [steamUser, setSteamUser] = useState('')
   const [steamPass, setSteamPass] = useState('')
-  const [steamDesc, setSteamDesc] = useState('') // Used as Image URL
+  const [steamDesc, setSteamDesc] = useState('')
+  const [price, setPrice] = useState('') // Used as Image URL
+  const [isBundle, setIsBundle] = useState(false)
+  const [notes, setNotes] = useState('')
   const [accMsg, setAccMsg] = useState('')
   
   const [error, setError] = useState('')
@@ -44,7 +47,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc 
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price 
         })
         setAccMsg(`Steam Account '${alias}' updated!`)
         setEditingId(null)
@@ -53,7 +56,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc 
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price
         })
         setAccMsg(`Steam Account '${alias}' added globally!`)
       }
@@ -61,6 +64,9 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
       setSteamUser('')
       setSteamPass('')
       setSteamDesc('')
+      setPrice('')
+      setIsBundle(false)
+      setNotes('')
       fetchAccounts()
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to save steam account')
@@ -83,6 +89,9 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setSteamUser(acc.steam_username)
     setSteamPass(acc.steam_password || '')
     setSteamDesc(acc.description || '')
+    setPrice(acc.owner_name || '')
+    setIsBundle(acc.notes ? true : false)
+    setNotes(acc.notes || '')
     setAccMsg('')
     setShowAccForm(true)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -144,13 +153,13 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-steam-blue flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-valqore-accent flex items-center gap-2">
           <Gamepad2 /> Manage Games
         </h1>
         <div className="flex gap-2">
           <button 
             onClick={handleImportAccounts}
-            className="bg-steam-blue/20 hover:bg-steam-blue/40 text-steam-blue border border-steam-blue/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+            className="bg-valqore-accent/20 hover:bg-valqore-accent/40 text-valqore-accent border border-valqore-accent/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
           >
             <Upload size={14} /> Import JSON
           </button>
@@ -181,30 +190,48 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
               {accMsg && <p className="text-green-400 text-sm mb-4">{accMsg}</p>}
               
               <form onSubmit={handleCreateOrUpdateAccount} className="flex flex-col gap-4">
+                <div className="flex items-center gap-2 mb-2 bg-black/20 p-3 rounded-lg border border-white/5">
+                  <input type="checkbox" id="isBundle" checked={isBundle} onChange={e => setIsBundle(e.target.checked)} className="w-4 h-4 accent-valqore-accent" />
+                  <label htmlFor="isBundle" className="text-sm text-gray-300 font-bold cursor-pointer">Is this a Game Bundle?</label>
+                </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Alias (Display Name)</label>
-                  <input type="text" value={alias} onChange={e => setAlias(e.target.value)} required placeholder="e.g. CS:GO Smurf" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-steam-blue/50" />
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="col-span-3">
+                      <label className="text-xs text-gray-400 mb-1 block">{isBundle ? 'Bundle Name' : 'Alias (Display Name)'}</label>
+                      <input type="text" value={alias} onChange={e => setAlias(e.target.value)} required placeholder={isBundle ? "e.g. Action Starter Pack" : "e.g. CS:GO Smurf"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="text-xs text-gray-400 mb-1 block">Price</label>
+                      <input type="text" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 49.99" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                    </div>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Steam Username</label>
-                    <input type="text" value={steamUser} onChange={e => setSteamUser(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-steam-blue/50" />
+                    <input type="text" value={steamUser} onChange={e => setSteamUser(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Steam Password</label>
-                    <input type="password" value={steamPass} onChange={e => setSteamPass(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-steam-blue/50" />
+                    <input type="password" value={steamPass} onChange={e => setSteamPass(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                 </div>
                 <div>
-                  <label className="text-xs text-gray-400 mb-1 block">Game Cover Image Link (URL)</label>
-                  <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder="https://example.com/cover.jpg" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-steam-blue/50" />
+                  <label className="text-xs text-gray-400 mb-1 block">{isBundle ? 'Bundle Cover Image Links (Comma Separated URLs)' : 'Game Cover Image Link (URL)'}</label>
+                  <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder={isBundle ? "https://ex.com/img1.jpg, https://ex.com/img2.jpg" : "https://example.com/cover.jpg"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                 </div>
+                {isBundle && (
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Bundle Description (List included games)</label>
+                    <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. 3 Games Included: Game A, Game B, Game C" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50 min-h-[80px] resize-y" />
+                  </div>
+                )}
                 <div className="flex gap-2 mt-2">
-                  <button type="submit" className="flex-1 bg-steam-blue/20 hover:bg-steam-blue/40 border border-steam-blue/50 text-steam-blue font-bold py-2 rounded-lg transition-colors">
+                  <button type="submit" className="flex-1 bg-valqore-accent/20 hover:bg-valqore-accent/40 border border-valqore-accent/50 text-valqore-accent font-bold py-2 rounded-lg transition-colors">
                     {editingId ? 'Save Changes' : 'Add Global Account'}
                   </button>
                   {editingId && (
-                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
+                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setPrice(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
                       Cancel
                     </button>
                   )}
@@ -246,7 +273,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                       <td className="px-4 py-3">{acc.steam_username}</td>
                       <td className="px-4 py-3 truncate max-w-xs">{acc.description || '-'}</td>
                       <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleEditClick(acc)} className="text-steam-blue hover:text-blue-400 mr-3">Edit</button>
+                        <button onClick={() => handleEditClick(acc)} className="text-valqore-accent hover:text-valqore-accent mr-3">Edit</button>
                         <button onClick={() => handleDeleteAccount(acc.id)} className="text-red-500 hover:text-red-400">Delete</button>
                       </td>
                     </motion.tr>

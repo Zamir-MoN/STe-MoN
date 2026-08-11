@@ -7,6 +7,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        'valqore-accent': '#d4ff00',
         'steam-dark': '#1b2838',
         'steam-light': '#2a475e',
         'steam-blue': '#66c0f4',

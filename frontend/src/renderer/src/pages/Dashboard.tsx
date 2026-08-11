@@ -1,12 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { Search, Gamepad2, Play, Users, Activity, ExternalLink, Link, MonitorPlay, ArrowLeft, LayoutDashboard, Check, Plus, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Search, Gamepad2, Play, Users, Activity, ExternalLink, Link, MonitorPlay, ArrowLeft, LayoutDashboard, Check, Plus, ThumbsUp, ThumbsDown, Package } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import api from '../api'
 import SkeletonCard from '../components/SkeletonCard'
-import SkeletonStatBox from '../components/SkeletonStatBox'
 
-const Dashboard = ({ role, showNotification, searchQuery }: { role: string, showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void, searchQuery: string }) => {
+const Dashboard = ({ role, showNotification, searchQuery, currency = 'USDT' }: { role: string, showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void, searchQuery: string, currency?: string }) => {
+  const formatPrice = (priceStr: string | null) => {
+    if (!priceStr) return 'Free';
+    const num = parseFloat(priceStr);
+    if (isNaN(num)) return priceStr;
+    if (currency === 'INR') return '₹' + (num * 83.5).toFixed(0);
+    return '$' + num.toFixed(2);
+  };
   const [accounts, setAccounts] = useState<any[]>([])
+  const [selectedAccount, setSelectedAccount] = useState<any | null>(null)
   const [banners, setBanners] = useState<any[]>([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
@@ -80,6 +87,196 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
     .filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => (a.alias_name || '').localeCompare(b.alias_name || ''))
 
+  const bundleAccounts = filteredAccounts.filter(acc => acc.notes)
+  const regularAccounts = filteredAccounts.filter(acc => !acc.notes)
+
+
+  if (selectedAccount) {
+    const inLibrary = selectedAccount.inLibrary;
+    
+    return (
+      <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="p-8 max-w-7xl mx-auto z-10 relative">
+        <button 
+          onClick={() => setSelectedAccount(null)} 
+          className="flex items-center gap-2 mb-6 text-gray-400 hover:text-white transition-colors group uppercase font-bold text-sm tracking-wider"
+        >
+          <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
+        </button>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          
+          {/* Left Column: Cover Art */}
+          <div className="w-full lg:w-[30%] flex flex-col gap-6">
+            <div className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-2xl border border-white/10">
+              <div className="absolute top-4 left-4 z-20 bg-red-500 text-white font-bold px-3 py-1 text-sm rounded shadow-lg shadow-red-500/20">-20% OFF</div>
+              {selectedAccount.description ? (
+                <img 
+                  src={(selectedAccount.description || '').split(',')[0].trim()} 
+                  alt={selectedAccount.alias_name} 
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
+                  <Gamepad2 size={64} className="text-white/20" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Middle Column: Details & Action */}
+          <div className="w-full lg:w-[45%] flex flex-col">
+            <h1 className="text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
+              <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
+              {selectedAccount.alias_name} DETAILS
+            </h1>
+
+            <div className="bg-black/30 border border-white/10 rounded-2xl p-6 shadow-xl mb-6">
+              <div className="flex gap-2 mb-4">
+                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">RPG</span>
+                <span className="bg-white/10 text-gray-300 text-xs font-bold px-3 py-1 rounded">WINDOWS</span>
+              </div>
+              
+              {!inLibrary && (
+                <>
+                  <p className="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Your Price</p>
+                  <div className="mb-6">
+                    <span className="text-white font-black text-4xl">{selectedAccount.owner_name ? `${selectedAccount.owner_name}` : 'Free'}</span>
+                  </div>
+                </>
+              )}
+
+              {inLibrary ? (
+                <button 
+                  disabled
+                  className="w-full bg-gray-600 text-white font-black py-4 rounded-xl text-lg flex items-center justify-center gap-3 shadow-lg mb-3 cursor-not-allowed"
+                >
+                  ALREADY IN LIBRARY
+                </button>
+              ) : (
+                <button 
+                  onClick={async () => {
+                    await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
+                    setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
+                  }}
+                  className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-4 rounded-xl text-lg transition-all flex items-center justify-center gap-3 shadow-lg shadow-valqore-accent/20 mb-3 active:scale-[0.98]"
+                >
+                  BUY NOW
+                </button>
+              )}
+
+              <button className="w-full bg-transparent border border-white/20 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mb-6">
+                <span className="text-gray-400">♡</span> Add to Wishlist
+              </button>
+
+              <div className="text-center border-t border-white/10 pt-4">
+                <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Secure Payments</p>
+                <div className="flex justify-center gap-4">
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">UPI</div>
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">T</div>
+                  <div className="w-10 h-6 bg-white/10 rounded flex items-center justify-center text-[10px] text-gray-400 font-bold border border-white/5">L</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-4 mb-8">
+              <button onClick={() => {}} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
+                <ThumbsUp size={18} /> {selectedAccount.working_votes || 0}
+              </button>
+              <button onClick={() => {}} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-3 rounded-xl transition-colors border border-white/10">
+                <ThumbsDown size={18} /> {selectedAccount.not_working_votes || 0}
+              </button>
+            </div>
+
+            {selectedAccount.notes && (
+              <>
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+                  Included Games
+                </h2>
+                <div className="bg-white/5 border border-white/10 rounded-xl p-6 mb-8 text-gray-300 leading-relaxed text-sm whitespace-pre-line">
+                  {selectedAccount.notes}
+                </div>
+              </>
+            )}
+
+            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+              Account Details
+            </h2>
+            <div className="grid grid-cols-2 gap-6 mb-8">
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><Play size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Instant Delivery</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Your account credentials will be emailed to you immediately after verification.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <div className="mt-1 text-valqore-accent"><Users size={20} /></div>
+                <div>
+                  <h4 className="font-bold text-white text-sm">Global Access</h4>
+                  <p className="text-xs text-gray-400 leading-relaxed mt-1">Play from anywhere in the world without region restrictions.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Column: Related News */}
+          <div className="w-full lg:w-[25%] flex flex-col gap-6">
+            <h2 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">
+              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+              RELATED NEWS
+            </h2>
+
+            {/* Static News Item 1 */}
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
+              <div className="h-24 bg-gradient-to-tr from-purple-900 to-indigo-900 relative">
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
+                  <span className="text-[10px] text-gray-500">1 days ago</span>
+                </div>
+                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Stellar Frontiers - Full Premium Account Access Available</h4>
+              </div>
+            </div>
+
+            {/* Static News Item 2 */}
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
+              <div className="h-24 bg-gradient-to-tr from-green-900 to-emerald-900 relative">
+                <div className="absolute top-2 right-2 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded z-10">TRENDING</div>
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
+                  <span className="text-[10px] text-gray-500">2 months ago</span>
+                </div>
+                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Abyssal Horrors - Full Premium Account Access Available</h4>
+              </div>
+            </div>
+            
+            {/* Static News Item 3 */}
+            <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:bg-white/10 transition-colors group cursor-pointer">
+              <div className="h-24 bg-gradient-to-tr from-blue-900 to-cyan-900 relative">
+                <div className="absolute top-2 right-2 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded z-10">TRENDING</div>
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+              </div>
+              <div className="p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded">FREE STEAM ACCOUNTS</span>
+                  <span className="text-[10px] text-gray-500">3 months ago</span>
+                </div>
+                <h4 className="font-bold text-white text-sm leading-snug group-hover:text-valqore-accent transition-colors">Velocity X - Full Premium Account Access Available</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="p-8 relative z-10">
       {isLoading ? (
@@ -142,6 +339,54 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
           </div>
         </div>
       )}
+
+      {bundleAccounts.length > 0 && (
+      <div className="w-full mb-16">
+        <h2 className="text-xl font-bold mb-6 text-white flex items-center gap-2">
+          <Package className="w-6 h-6 text-valqore-accent" />
+          Game Bundles
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {bundleAccounts.map((acc, index) => {
+              const images = (acc.description || '').split(',').map(url => url.trim()).filter(url => url)
+              const gradients = ['from-valqore-accent/20', 'from-purple-500/20', 'from-blue-500/20', 'from-emerald-500/20']
+              const gradient = gradients[index % gradients.length]
+              return (
+                <motion.div 
+                  layout
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  key={acc.id} 
+                  onClick={() => setSelectedAccount(acc)}
+                  className="bg-black/30 border border-white/10 rounded-2xl overflow-hidden hover:border-valqore-accent/30 transition-all group cursor-pointer"
+                >
+                  <div className={`h-48 bg-gradient-to-r ${gradient} to-transparent relative p-6 flex flex-col justify-end overflow-hidden`}>
+                    {/* Background Images */}
+                    <div className="absolute inset-0 flex">
+                      {images.slice(0, 3).map((img, i) => (
+                        <div key={i} className="flex-1 h-full relative" style={{ zIndex: 0, opacity: 0.3 }}>
+                          <img src={img} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="absolute top-4 right-4 bg-valqore-accent text-black text-xs font-bold px-2 py-1 rounded z-10">BUNDLE</div>
+                    <h3 className="text-xl font-bold text-white z-10 group-hover:text-valqore-accent transition-colors">{acc.alias_name}</h3>
+                    <p className="text-sm text-gray-300 z-10 truncate">{acc.notes}</p>
+                  </div>
+                  <div className="p-4 flex justify-between items-center bg-black/50">
+                    <span className="text-valqore-accent font-bold text-lg">{formatPrice(acc.owner_name)}</span>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </AnimatePresence>
+        </div>
+      </div>
+      )}
       <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
         <LayoutDashboard /> Game Store
       </h1>
@@ -150,66 +395,83 @@ const Dashboard = ({ role, showNotification, searchQuery }: { role: string, show
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => <SkeletonCard key={i} />)}
         </div>
-      ) : filteredAccounts.length === 0 ? (
+      ) : regularAccounts.length === 0 && bundleAccounts.length === 0 ? (
         <div className="bg-white/5 border border-white/10 rounded-xl p-8 text-center text-gray-400">
           No games match your search.
         </div>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          <AnimatePresence mode="popLayout">
-          {filteredAccounts.map(acc => (
+                    <AnimatePresence mode="popLayout">
+          {regularAccounts.map((acc, index) => {
+            // Generate some static placeholders based on index to match the premium design feel
+            const discounts = ["-20%", "-15%", "-50%", "-10%", "-25%"];
+            const badges = [
+              { text: "AAA", color: "bg-valqore-accent text-black" },
+              { text: "HORROR", color: "bg-orange-500 text-white" },
+              { text: "REMASTERED", color: "bg-cyan-400 text-black" },
+              { text: "RACING", color: "bg-yellow-500 text-black" },
+              { text: "STRATEGY", color: "bg-orange-400 text-black" }
+            ];
+            const subtitles = ["RPG, Neon Studios", "Open World, Cosmic", "Horror, Dark Matter Inc", "Sports, Redline", "Action RPG, Ghost Games"];
+            const prices = ["$47.99", "$69.99", "$33.99", "$14.99", "$37.49", "$44.99", "$39.99", "$59.99"];
+
+            const discount = discounts[index % discounts.length];
+            const badge = badges[index % badges.length];
+            const subtitle = subtitles[index % subtitles.length];
+            const price = prices[index % prices.length];
+
+            return (
             <motion.div 
+              layout
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.3, ease: "easeInOut" }}
               key={acc.id} 
-              className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-xl border border-white/10 group hover:border-white/30 transition-all hover:shadow-2xl hover:shadow-black/50"
+              onClick={() => setSelectedAccount(acc)}
+              className="flex flex-col group cursor-pointer"
             >
-              {/* Game Cover Image */}
-              {acc.description ? (
-                <img src={acc.description} alt={acc.alias_name} className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:scale-105 transition-all duration-500" />
-              ) : (
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
-                  <Gamepad2 size={48} className="text-white/20" />
+              {/* Game Cover Image Container (Square-ish) */}
+              <div className="relative aspect-[4/5] bg-black/40 rounded-xl overflow-hidden shadow-xl border border-white/10 group-hover:border-white/30 transition-all group-hover:shadow-2xl group-hover:shadow-black/50 mb-3">
+                
+                {acc.description ? (
+                  <img src={(acc.description || '').split(',')[0].trim()} alt={acc.alias_name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                ) : (
+                  <div className="absolute inset-0 w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
+                    <Gamepad2 size={48} className="text-white/20" />
+                  </div>
+                )}
+                
+                {/* Top Right Discount Badge */}
+                <div className="absolute top-0 right-0 bg-red-500 text-white font-bold px-3 py-1 rounded-bl-xl text-xs z-10 shadow-lg shadow-red-500/20">
+                  {discount}
                 </div>
-              )}
-              {/* Gradient Overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-0 group-hover:opacity-90 transition-all duration-300"></div>
-              
-              {/* Top Right Action Button */}
-              {acc.inLibrary ? (
-                <div 
-                  className="absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-20 shadow-lg bg-steam-blue/20 text-steam-blue border border-steam-blue/30 flex items-center justify-center cursor-default"
-                  title="Already in Library"
-                >
-                  <Check size={16} />
-                </div>
-              ) : (
-                <button 
-                  onClick={(e) => { e.stopPropagation(); handleLibraryToggle(acc.id, false, acc.hasAccess !== false) }}
-                  className="absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-20 shadow-lg bg-green-500/20 text-green-400 hover:bg-green-500/40 border border-green-500/30"
-                  title="Add to Library"
-                >
-                  <Plus size={16} />
-                </button>
-              )}
 
-              <div className="absolute bottom-0 left-0 right-0 p-5 transform translate-y-2 group-hover:translate-y-0 transition-all flex flex-col items-center text-center">
-                <div className="w-full flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <h3 className="font-bold text-white text-lg drop-shadow-md leading-tight truncate w-full">{acc.alias_name}</h3>
+                {/* Bottom Left Category Badge */}
+                <div className={"absolute bottom-3 left-3 text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider z-10 " + badge.color}>
+                  {badge.text}
                 </div>
-                <div className="flex gap-3 mt-2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="flex items-center gap-1 text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-md backdrop-blur-md">
-                    <ThumbsUp size={12} /> {acc.working_votes || 0}
-                  </div>
-                  <div className="flex items-center gap-1 text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md backdrop-blur-md">
-                    <ThumbsDown size={12} /> {acc.not_working_votes || 0}
-                  </div>
+
+                {/* Bottom Right Wishlist Icon */}
+                <div className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-300 hover:text-white hover:bg-black/80 transition-colors border border-white/10 z-10 shadow-lg group-hover:border-white/20">
+                  <span className="text-sm font-bold opacity-80 group-hover:opacity-100">♡</span>
+                </div>
+                
+                {/* Optional Subtle Gradient Overlay for contrast */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
+              </div>
+
+              {/* Lower Text Details */}
+              <div className="flex flex-col w-full">
+                <h3 className="font-bold text-white text-[15px] leading-tight truncate w-full mb-1 group-hover:text-gray-200">{acc.alias_name}</h3>
+                <div className="flex justify-between items-end">
+                  <p className="text-xs text-gray-500 truncate mr-2">{subtitle}</p>
+                  <span className="text-valqore-accent font-black text-sm whitespace-nowrap">{formatPrice(acc.owner_name)}</span>
                 </div>
               </div>
-              </motion.div>
-          ))}
+
+            </motion.div>
+          )})}
           </AnimatePresence>
         </div>
       )}

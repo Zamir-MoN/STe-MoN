@@ -1,4 +1,3 @@
-import React from 'react'
 
 const SkeletonStatBox = () => (
   <div className="bg-white/5 border border-white/5 rounded-xl p-4 animate-pulse flex items-center justify-between">

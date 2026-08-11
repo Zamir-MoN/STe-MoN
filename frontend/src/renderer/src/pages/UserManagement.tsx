@@ -112,17 +112,6 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
     }
   }
 
-  const handleResetHwid = async (id: number) => {
-    if (!confirm('Reset device binding for this user? They will be bound to the next PC they log into.')) return
-    try {
-      await api.put(`/auth/users/${id}/reset-hwid`)
-      setUserMsg('Device binding reset successfully')
-      setTimeout(() => setUserMsg(''), 3000)
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to reset device binding')
-    }
-  }
-
   const handleGrantAccess = async () => {
     if (!editingUserId || !selectedGameToGrant) return;
     try {
@@ -170,7 +159,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-8">
-      <h1 className="text-2xl font-bold mb-6 text-purple-400 flex items-center gap-2">
+      <h1 className="text-2xl font-bold mb-6 text-valqore-accent flex items-center gap-2">
         <Users /> Manage Users
       </h1>
       
@@ -195,11 +184,11 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Username</label>
-                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50" />
+                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">{editingUserId ? 'New Password (blank to keep)' : 'Password'}</label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!editingUserId} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50" />
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} required={!editingUserId} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Role</label>
@@ -207,7 +196,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                       value={formRole} 
                       onChange={e => setFormRole(e.target.value)} 
                       disabled={editingUserId ? appUsers.find(u => u.id === editingUserId)?.isDefaultAdmin : false}
-                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50 disabled:opacity-50"
+                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50 disabled:opacity-50"
                     >
                       <option value="user" className="bg-gray-900 text-white">User</option>
                       {currentUserRole === 'owner' && <option value="admin" className="bg-gray-900 text-white">Admin</option>}
@@ -218,7 +207,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                     <select 
                       value={accessPlan} 
                       onChange={e => setAccessPlan(e.target.value)} 
-                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50"
+                      className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50"
                     >
                       <option value="FULL" className="bg-gray-900 text-white">Permanent (All Games)</option>
                       <option value="SELECTIVE" className="bg-gray-900 text-white">Selected Game (Manage manually)</option>
@@ -227,7 +216,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                 </div>
 
                 <div className="flex gap-2 mt-4">
-                  <button type="submit" className="flex-1 bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/50 text-purple-400 font-bold py-2 rounded-lg transition-colors">
+                  <button type="submit" className="flex-1 bg-valqore-accent/20 hover:bg-valqore-accent/30 border border-valqore-accent/50 text-valqore-accent font-bold py-2 rounded-lg transition-colors">
                     {editingUserId ? 'Save User Settings' : 'Create User'}
                   </button>
                   {editingUserId && (
@@ -242,7 +231,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
               {editingUserId && accessPlan === 'SELECTIVE' && (
                 <div className="mt-8 pt-6 border-t border-white/10">
                   <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                    <Shield size={18} className="text-purple-400" />
+                    <Shield size={18} className="text-valqore-accent" />
                     Manage Selective Access
                   </h3>
                   
@@ -253,7 +242,7 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                         <select 
                           value={selectedGameToGrant} 
                           onChange={e => setSelectedGameToGrant(e.target.value)}
-                          className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50"
+                          className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50"
                         >
                           <option value="" className="bg-gray-900 text-white">-- Choose a Game --</option>
                           {allAccounts.map(acc => (
@@ -270,14 +259,14 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                           min="0"
                           value={durationDays} 
                           onChange={e => setDurationDays(e.target.value)} 
-                          className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-purple-500/50" 
+                          className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" 
                           placeholder="0 = Permanent"
                         />
                       </div>
                       <button 
                         onClick={handleGrantAccess}
                         disabled={!selectedGameToGrant}
-                        className="bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/50 text-purple-400 font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                        className="bg-valqore-accent/20 hover:bg-valqore-accent/40 border border-valqore-accent/50 text-valqore-accent font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
                       >
                         Grant Access
                       </button>
@@ -379,11 +368,9 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                         )}
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
+
                         {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
-                          <button onClick={() => handleResetHwid(u.id)} className="text-blue-400 hover:text-blue-300 mr-3 text-xs" title="Reset Device Bind">Reset Device</button>
-                        )}
-                        {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
-                          <button onClick={() => handleEditUserClick(u)} className="text-purple-400 hover:text-purple-300 mr-3 text-xs">Edit</button>
+                          <button onClick={() => handleEditUserClick(u)} className="text-valqore-accent hover:text-purple-300 mr-3 text-xs">Edit</button>
                         )}
                         {!u.isDefaultAdmin && !u.isSelf && ((currentUserRole === 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
                           <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400 text-xs">Delete</button>

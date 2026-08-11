@@ -1,4 +1,3 @@
-import React from 'react'
 
 const SkeletonRow = () => (
   <div className="flex items-center justify-between p-4 bg-white/5 border border-white/5 rounded-xl animate-pulse mb-3">

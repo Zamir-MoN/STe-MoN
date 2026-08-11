@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { Settings, Play, Gamepad2, User, AlertTriangle, Check, Shield } from 'lucide-react'
-import { motion } from 'framer-motion'
 import api from '../api'
 
 const SettingsPage = ({ showNotification }: { showNotification: (msg: React.ReactNode, type?: 'success'|'error'|'info') => void }) => {
@@ -133,12 +132,12 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
   return (
     <div className="p-8 max-w-4xl mx-auto pb-24">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-        <Settings size={28} className="text-steam-blue" /> System Settings
+        <Settings size={28} className="text-valqore-accent" /> System Settings
       </h1>
 
       <div className="space-y-8">
         <section className="bg-black/20 border border-white/10 rounded-xl p-6">
-          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><User size={20} className="text-purple-400" /> User Profile</h2>
+          <h2 className="text-xl font-bold mb-6 flex items-center gap-2"><User size={20} className="text-valqore-accent" /> User Profile</h2>
           
           <div className="flex items-start gap-8">
             <div className="flex flex-col items-center gap-3">
@@ -162,7 +161,7 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
                   type="text" 
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-steam-blue/50 focus:ring-1 focus:ring-steam-blue/50 transition-all"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-valqore-accent/50 focus:ring-1 focus:ring-valqore-accent/50 transition-all"
                   placeholder="Enter your display name"
                 />
               </div>
@@ -200,7 +199,7 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
                     type="text" 
                     value={steamPath}
                     onChange={(e) => setSteamPath(e.target.value)}
-                    className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-steam-blue/50 focus:ring-1 focus:ring-steam-blue/50 transition-all font-mono text-gray-300"
+                    className="flex-1 bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-valqore-accent/50 focus:ring-1 focus:ring-valqore-accent/50 transition-all font-mono text-gray-300"
                     placeholder="C:\Program Files (x86)\Steam\steam.exe"
                   />
                   <button 
@@ -211,7 +210,7 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
                   </button>
                 </div>
                 {savedSteamPath ? (
-                  <button onClick={() => { setSteamPath(savedSteamPath); setIsEditingSteamPath(false); }} className="text-xs text-steam-blue mt-3 hover:underline">Cancel Editing</button>
+                  <button onClick={() => { setSteamPath(savedSteamPath); setIsEditingSteamPath(false); }} className="text-xs text-valqore-accent mt-3 hover:underline">Cancel Editing</button>
                 ) : (
                   <p className="text-xs text-gray-500 mt-2">If Steam isn't detected automatically, locate the steam.exe file manually.</p>
                 )}
@@ -228,7 +227,7 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
             <button 
               onClick={checkPermissions}
               disabled={checkingPerms}
-              className="px-6 py-3 bg-steam-blue hover:bg-steam-blue/80 text-white rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-steam-blue/20"
+              className="px-6 py-3 bg-valqore-accent/20 hover:bg-valqore-accent/30 border border-valqore-accent/50 text-valqore-accent rounded-lg text-sm font-bold transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-valqore-accent/20"
             >
               {checkingPerms ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : <Shield size={16} />}
               Run Diagnostics

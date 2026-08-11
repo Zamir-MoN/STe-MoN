@@ -1,4 +1,3 @@
-import React from 'react'
 
 const SkeletonCard = () => (
   <div className="bg-white/5 border border-white/5 rounded-xl overflow-hidden shadow-lg animate-pulse">

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import logo from '../assets/logo.png'
+import { motion } from 'framer-motion'
 import { Gamepad2 } from 'lucide-react'
 
 const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
@@ -28,12 +27,12 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           <motion.div 
             animate={{ rotate: 360 }}
             transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-4 rounded-full border border-steam-blue/30 border-t-steam-blue border-b-purple-500 opacity-50"
+            className="absolute -inset-4 rounded-full border border-valqore-accent/30 border-t-valqore-accent border-b-valqore-accent opacity-50"
           ></motion.div>
           <motion.div 
             animate={{ rotate: -360 }}
             transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
-            className="absolute -inset-8 rounded-full border border-purple-500/20 border-r-steam-blue border-l-purple-500 opacity-30"
+            className="absolute -inset-8 rounded-full border border-valqore-accent/20 border-r-valqore-accent border-l-valqore-accent opacity-30"
           ></motion.div>
           <Gamepad2 size={80} className="text-white drop-shadow-[0_0_15px_rgba(42,71,94,0.8)] relative z-10" />
         </div>
@@ -42,7 +41,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.8 }}
-          className="text-4xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-steam-blue via-white to-purple-500 mb-2 drop-shadow-lg"
+          className="text-4xl font-black tracking-widest text-transparent bg-clip-text from-valqore-accent via-white to-valqore-accent mb-2 drop-shadow-lg"
         >
           STe MoN
         </motion.h1>
@@ -51,7 +50,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 0.8 }}
-          className="text-steam-blue/60 font-mono tracking-[0.3em] text-xs uppercase"
+          className="text-valqore-accent/60 font-mono tracking-[0.3em] text-xs uppercase"
         >
           Initializing Core Systems
         </motion.p>
@@ -64,7 +63,7 @@ const SplashScreen = ({ onComplete }: { onComplete: () => void }) => {
         className="absolute bottom-12 flex flex-col items-center"
       >
         <p className="text-gray-500 font-mono text-[10px] tracking-widest uppercase flex items-center gap-2">
-          Developed by <span className="text-steam-blue font-bold text-xs tracking-widest">Zamir</span>
+          Developed by <span className="text-valqore-accent font-bold text-xs tracking-widest">Zamir</span>
         </p>
       </motion.div>
     </motion.div>

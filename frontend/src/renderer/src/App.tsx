@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy, useMemo } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Gamepad2, X } from 'lucide-react'
@@ -17,32 +17,41 @@ const GameManagement = lazy(() => import('./pages/GameManagement'))
 const BroadcastPanel = lazy(() => import('./pages/BroadcastPanel'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
 
-class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean}> {
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {hasError: boolean, error: any}> {
   constructor(props: {children: React.ReactNode}) {
     super(props)
-    this.state = { hasError: false }
+    this.state = { hasError: false, error: null }
   }
   static getDerivedStateFromError(error: any) {
-    return { hasError: true }
+    return { hasError: true, error }
   }
   componentDidCatch(error: any, errorInfo: any) {
     console.error("App Error:", error, errorInfo)
   }
   render() {
     if (this.state.hasError) {
-      return <div className="p-10 text-red-500 font-bold bg-black min-h-screen">Something went wrong.</div>
+      return (
+        <div className="p-10 text-red-500 font-bold bg-black min-h-screen">
+          Something went wrong.<br />
+          <pre className="mt-4 text-xs bg-red-900/50 p-4 rounded text-white overflow-auto">
+            {this.state.error?.toString()}
+            <br />
+            {this.state.error?.stack}
+          </pre>
+        </div>
+      )
     }
     return this.props.children
   }
 }
 
-const AnimatedRoutes = ({ role, showNotification, searchQuery }: { role: string, showNotification: any, searchQuery: string }) => {
+const AnimatedRoutes = ({ role, showNotification, searchQuery, currency }: { role: string, showNotification: any, searchQuery: string, currency: string }) => {
   const location = useLocation()
   return (
     <AnimatePresence mode="wait">
-      <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><div className="animate-pulse flex flex-col items-center"><div className="w-10 h-10 border-4 border-steam-blue border-t-transparent rounded-full animate-spin"></div><div className="mt-4 text-steam-blue font-semibold tracking-widest">LOADING MODULE...</div></div></div>}>
+      <Suspense fallback={<div className="flex h-full w-full items-center justify-center"><div className="animate-pulse flex flex-col items-center"><div className="w-10 h-10 border-4 border-valqore-accent border-t-transparent rounded-full animate-spin"></div><div className="mt-4 text-valqore-accent font-semibold tracking-widest">LOADING MODULE...</div></div></div>}>
         <Routes location={location} key={location.pathname}>
-          <Route path="/" element={<PageTransition><Dashboard role={role} showNotification={showNotification} searchQuery={searchQuery} /></PageTransition>} />
+          <Route path="/" element={<PageTransition><Dashboard role={role} showNotification={showNotification} searchQuery={searchQuery} currency={currency} /></PageTransition>} />
           <Route path="/users" element={role === 'admin' || role === 'owner' ? <PageTransition><UserManagement role={role} /></PageTransition> : <Navigate to="/" replace />} />
           <Route path="/manage-games" element={role === 'admin' || role === 'owner' ? <PageTransition><GameManagement searchQuery={searchQuery} /></PageTransition> : <Navigate to="/" replace />} />
           <Route path="/broadcast" element={role === 'admin' || role === 'owner' ? <PageTransition><BroadcastPanel role={role} /></PageTransition> : <Navigate to="/" replace />} />
@@ -61,6 +70,7 @@ function App() {
   const [showNotificationsPanel, setShowNotificationsPanel] = useState(false)
   const [notificationHistory, setNotificationHistory] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
+  const [currency, setCurrency] = useState('USDT')
   const [showSplash, setShowSplash] = useState(true)
 
   const unreadCount = notificationHistory.filter(n => !n.read).length
@@ -98,7 +108,7 @@ function App() {
 
         showNotification(
           <div className="flex items-center gap-4 py-1">
-            {description ? <img src={description} alt={alias_name} className="w-10 h-14 object-cover rounded-md shadow-md border border-white/20" /> : <Gamepad2 size={24} className="text-steam-blue" />}
+            {description ? <img src={description} alt={alias_name} className="w-10 h-14 object-cover rounded-md shadow-md border border-white/20" /> : <Gamepad2 size={24} className="text-valqore-accent" />}
             <div className="flex flex-col text-left">
               <span className="font-bold text-white text-sm">New Game Available</span>
               <span className="text-gray-300 text-xs mt-0.5">{alias_name}</span>
@@ -161,7 +171,7 @@ function App() {
               className={`absolute top-12 right-8 z-50 px-6 py-3 rounded-xl shadow-2xl backdrop-blur-md border font-bold flex items-center gap-3 ${
                 notification.type === 'success' ? 'bg-green-500/20 border-green-500/50 text-green-400' :
                 notification.type === 'error' ? 'bg-red-500/20 border-red-500/50 text-red-400' :
-                'bg-steam-blue/20 border-steam-blue/50 text-steam-blue'
+                'bg-valqore-accent/20 border-valqore-accent/50 text-valqore-accent'
               }`}
             >
               {notification.message}
@@ -198,18 +208,18 @@ function App() {
                   <p className="text-gray-500 text-sm text-center mt-10">No notifications yet</p>
                 ) : (
                   notificationHistory.map(notif => (
-                    <div key={notif.id} className={`p-4 rounded-xl border ${notif.read ? 'bg-white/5 border-white/5' : 'bg-steam-blue/10 border-steam-blue/30 cursor-pointer hover:bg-steam-blue/20'} flex items-start gap-3 transition-colors`} onClick={() => {
+                    <div key={notif.id} className={`p-4 rounded-xl border ${notif.read ? 'bg-white/5 border-white/5' : 'bg-valqore-accent/10 border-valqore-accent/30 cursor-pointer hover:bg-valqore-accent/20'} flex items-start gap-3 transition-colors`} onClick={() => {
                       if (!notif.read) {
                         setNotificationHistory(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n))
                       }
                     }}>
-                      {notif.description ? <img src={notif.description} alt={notif.alias_name} className="w-10 h-14 object-cover rounded-md shadow-md border border-white/20" /> : <Gamepad2 size={24} className="text-steam-blue mt-1" />}
+                      {notif.description ? <img src={notif.description} alt={notif.alias_name} className="w-10 h-14 object-cover rounded-md shadow-md border border-white/20" /> : <Gamepad2 size={24} className="text-valqore-accent mt-1" />}
                       <div className="flex flex-col text-left flex-1">
                         <span className="font-bold text-white text-sm">New Game Added</span>
                         <span className="text-gray-300 text-xs mt-0.5">{notif.alias_name}</span>
                         <span className="text-gray-500 text-[10px] mt-2">{new Date(notif.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
-                      {!notif.read && <div className="w-2 h-2 rounded-full bg-steam-blue mt-2"></div>}
+                      {!notif.read && <div className="w-2 h-2 rounded-full bg-valqore-accent mt-2"></div>}
                     </div>
                   ))
                 )}
@@ -232,9 +242,9 @@ function App() {
           <div className="flex-1 flex overflow-hidden">
             <Sidebar onLogout={handleLogout} role={role} />
             <div className="flex-1 flex flex-col relative z-10">
-              <TopBar unreadCount={unreadCount} onToggleNotifications={() => setShowNotificationsPanel(!showNotificationsPanel)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+              <TopBar unreadCount={unreadCount} onToggleNotifications={() => setShowNotificationsPanel(!showNotificationsPanel)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} currency={currency} setCurrency={setCurrency} />
               <div className="flex-1 overflow-y-auto">
-                <AnimatedRoutes role={role} showNotification={showNotification} searchQuery={searchQuery} />
+                <AnimatedRoutes role={role} showNotification={showNotification} searchQuery={searchQuery} currency={currency} />
               </div>
             </div>
           </div>

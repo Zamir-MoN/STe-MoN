@@ -107,7 +107,7 @@ const BroadcastPanel = ({ role }: { role: string }) => {
                       max="100" 
                       value={previewAlign} 
                       onChange={e => setPreviewAlign(Number(e.target.value))} 
-                      className="w-24 accent-purple-500" 
+                      className="w-24 accent-valqore-accent" 
                     />
                   </div>
                   <div className="flex items-center gap-3">

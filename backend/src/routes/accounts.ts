@@ -248,14 +248,16 @@ router.put('/:id', async (req: AuthRequest, res) => {
       return res.status(403).json({ error: 'Forbidden: Admins and Owners only' })
     }
 
-    const { alias_name, steam_username, steam_password, description } = req.body
+    const { alias_name, steam_username, steam_password, description, owner_name, notes } = req.body
     const account = await prisma.account.update({
       where: { id: parseInt(req.params.id as string) },
       data: {
         alias_name,
         steam_username,
         steam_password,
-        description
+        description,
+        owner_name,
+        notes
       }
     })
 

@@ -13,6 +13,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   const [steamPass, setSteamPass] = useState('')
   const [steamDesc, setSteamDesc] = useState('')
   const [price, setPrice] = useState('') // Used as Image URL
+  const [discount, setDiscount] = useState('')
   const [trailerUrl, setTrailerUrl] = useState('')
   const [isBundle, setIsBundle] = useState(false)
   const [notes, setNotes] = useState('')
@@ -48,7 +49,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl 
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount
         })
         setAccMsg(`Steam Account '${alias}' updated!`)
         setEditingId(null)
@@ -57,7 +58,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount
         })
         setAccMsg(`Steam Account '${alias}' added globally!`)
       }
@@ -67,6 +68,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
       setSteamDesc('')
       setTrailerUrl('')
       setPrice('')
+      setDiscount('')
       setIsBundle(false)
       setNotes('')
       fetchAccounts()
@@ -93,6 +95,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setSteamDesc(acc.description || '')
     setTrailerUrl(acc.trailer_url || '')
     setPrice(acc.owner_name || '')
+    setDiscount(acc.discount?.toString() || '')
     setIsBundle(acc.notes ? true : false)
     setNotes(acc.notes || '')
     setAccMsg('')
@@ -199,7 +202,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                   <label htmlFor="isBundle" className="text-sm text-gray-300 font-bold cursor-pointer">Is this a Game Bundle?</label>
                 </div>
                 <div>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-5 gap-4">
                     <div className="col-span-3">
                       <label className="text-xs text-gray-400 mb-1 block">{isBundle ? 'Bundle Name' : 'Alias (Display Name)'}</label>
                       <input type="text" value={alias} onChange={e => setAlias(e.target.value)} required placeholder={isBundle ? "e.g. Action Starter Pack" : "e.g. CS:GO Smurf"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
@@ -207,6 +210,10 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     <div className="col-span-1">
                       <label className="text-xs text-gray-400 mb-1 block">Price (INR)</label>
                       <input type="text" value={price} onChange={e => setPrice(e.target.value)} placeholder="e.g. 999" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                    </div>
+                    <div className="col-span-1">
+                      <label className="text-xs text-gray-400 mb-1 block">Discount (%)</label>
+                      <input type="text" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="e.g. 20" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                     </div>
                   </div>
                 </div>
@@ -239,7 +246,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     {editingId ? 'Save Changes' : 'Add Global Account'}
                   </button>
                   {editingId && (
-                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setTrailerUrl(''); setPrice(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
+                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setTrailerUrl(''); setPrice(''); setDiscount(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
                       Cancel
                     </button>
                   )}

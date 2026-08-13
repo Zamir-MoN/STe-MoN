@@ -86,8 +86,14 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
   }
 
   const handleVote = async (id: number, vote: 'working' | 'not_working') => {
+    const votedKey = `voted_${id}`;
+    if (localStorage.getItem(votedKey)) {
+        alert('You have already voted for this game');
+        return;
+    }
     try {
       await api.post(`/accounts/${id}/vote`, { vote })
+      localStorage.setItem(votedKey, 'true');
       // Update local state without re-fetching all
       setSelectedAccount((prev: any) => ({
         ...prev,
@@ -115,7 +121,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
           {/* Left Column: Cover Art */}
           <div className="w-full lg:w-[30%] flex flex-col gap-6">
             <div className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-2xl border border-white/10">
-              <div className="absolute top-4 left-4 z-20 bg-red-500 text-white font-bold px-3 py-1 text-sm rounded shadow-lg shadow-red-500/20">-20% OFF</div>
+
               {selectedAccount.description ? (
                 <img 
                   src={(selectedAccount.description || '').split(',')[0].trim()} 
@@ -131,7 +137,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
           </div>
 
           {/* Middle Column: Details & Action */}
-          <div className="w-full lg:w-[45%] flex flex-col">
+          <div className="w-full lg:flex-1 flex flex-col">
             <h1 className="text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
               <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
               {selectedAccount.alias_name} DETAILS
@@ -153,9 +159,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                 {launchingId === selectedAccount.id ? 'LAUNCHING STEAM...' : 'LAUNCH STEAM'}
               </button>
 
-              <button className="w-full bg-transparent border border-white/20 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 mb-6">
-                <span className="text-gray-400">♡</span> Add to Wishlist
-              </button>
+
 
               <div className="text-center border-t border-white/10 pt-4">
                 <p className="text-xs text-gray-500 font-bold uppercase tracking-wider mb-3">Secure Payments</p>
@@ -240,59 +244,6 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
               </div>
             )}
           </div>
-
-          {/* Right Column: Related News */}
-          <div className="w-full lg:w-[25%] flex flex-col gap-6">
-            <h2 className="text-xl font-bold text-white uppercase tracking-tight flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-              RELATED NEWS
-            </h2>
-            
-            {/* News Card 1 */}
-            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer">
-              <div className="h-32 bg-gray-800 relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
-                  <span className="text-[10px] text-gray-500">1 days ago</span>
-                </div>
-                <h3 className="text-sm font-bold text-white leading-tight">Stellar Frontiers - Full Premium Account Access Available</h3>
-              </div>
-            </div>
-
-            {/* News Card 2 */}
-            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer relative">
-              <div className="absolute top-2 right-2 z-10 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase">Trending</div>
-              <div className="h-32 bg-gray-800 relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
-                  <span className="text-[10px] text-gray-500">2 months ago</span>
-                </div>
-                <h3 className="text-sm font-bold text-white leading-tight">Abyssal Horrors - Full Premium Account Access Available</h3>
-              </div>
-            </div>
-
-            {/* News Card 3 */}
-            <div className="bg-black/30 border border-white/10 rounded-xl overflow-hidden hover:border-white/30 transition-all cursor-pointer relative">
-              <div className="absolute top-2 right-2 z-10 bg-valqore-accent text-black text-[10px] font-bold px-2 py-0.5 rounded uppercase">Trending</div>
-              <div className="h-32 bg-gray-800 relative">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-              </div>
-              <div className="p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-purple-900 text-purple-300 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Free Steam Accounts</span>
-                  <span className="text-[10px] text-gray-500">3 months ago</span>
-                </div>
-                <h3 className="text-sm font-bold text-white leading-tight">Velocity X - Full Premium Account Access Available</h3>
-              </div>
-            </div>
-          </div>
-
         </div>
       </motion.div>
     )
@@ -351,14 +302,7 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
                   {acc.favorite && <span className="text-yellow-400 drop-shadow">★</span>}
                   <h3 className="font-bold text-white text-lg drop-shadow-md leading-tight truncate w-full">{acc.alias_name}</h3>
                 </div>
-                <div className="flex gap-3 mt-2 text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="flex items-center gap-1 text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-1 rounded-md backdrop-blur-md">
-                    <ThumbsUp size={12} /> {acc.working_votes || 0}
-                  </div>
-                  <div className="flex items-center gap-1 text-red-400 bg-red-500/10 border border-red-500/20 px-2 py-1 rounded-md backdrop-blur-md">
-                    <ThumbsDown size={12} /> {acc.not_working_votes || 0}
-                  </div>
-                </div>
+
               </div>
               </motion.div>
           ))}

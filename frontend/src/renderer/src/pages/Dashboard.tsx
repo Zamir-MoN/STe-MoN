@@ -88,6 +88,27 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
     }
   }
 
+  const handleVote = async (id: number, vote: 'working' | 'not_working') => {
+    const votedKey = `voted_${id}`;
+    if (localStorage.getItem(votedKey)) {
+        showNotification('You have already voted for this game', 'error');
+        return;
+    }
+    try {
+      await api.post(`/accounts/${id}/vote`, { vote })
+      localStorage.setItem(votedKey, 'true');
+      // Update local state without re-fetching all
+      setSelectedAccount((prev: any) => ({
+        ...prev,
+        working_votes: vote === 'working' ? (prev.working_votes || 0) + 1 : prev.working_votes,
+        not_working_votes: vote === 'not_working' ? (prev.not_working_votes || 0) + 1 : prev.not_working_votes
+      }))
+      fetchAccounts() // Refresh background list
+    } catch (err) {
+      console.error("Failed to vote", err)
+    }
+  }
+
   const filteredAccounts = accounts
     .filter(acc => acc.alias_name?.toLowerCase().includes(searchQuery.toLowerCase()))
     .sort((a, b) => (a.alias_name || '').localeCompare(b.alias_name || ''))
@@ -125,7 +146,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   
                   if (hasTrailer && activeMedia === 0) {
                     const match = selectedAccount.trailer_url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1&mute=1&loop=1&playlist=${match[2]}` : null;
+                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
                     return embedUrl ? (
                       <iframe src={embedUrl} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
                     ) : (
@@ -148,30 +169,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   }
                 })()}
               </div>
-              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {selectedAccount.trailer_url && (
-                  <div 
-                    onClick={() => setActiveMedia(0)}
-                    className={`min-w-[120px] w-[120px] aspect-video bg-black rounded-lg border ${activeMedia === 0 ? 'border-valqore-accent shadow-lg shadow-valqore-accent/20' : 'border-white/20'} overflow-hidden cursor-pointer hover:border-valqore-accent transition-colors relative group`}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40"><Play className={`transition-colors ${activeMedia === 0 ? 'text-valqore-accent' : 'text-white group-hover:text-valqore-accent'}`} size={24}/></div>
-                    {/* Optionally try to fetch a yt thumbnail, but showing the first game image with a play icon works too */}
-                    {selectedAccount.description && <img src={(selectedAccount.description || '').split(',')[0].trim()} alt="trailer thumbnail" className="w-full h-full object-cover opacity-50" />}
-                  </div>
-                )}
-                {selectedAccount.description?.split(',').map((url: string, i: number) => {
-                  const mediaIndex = selectedAccount.trailer_url ? i + 1 : i;
-                  return (
-                    <div 
-                      key={mediaIndex} 
-                      onClick={() => setActiveMedia(mediaIndex)}
-                      className={`min-w-[120px] w-[120px] aspect-video bg-black rounded-lg border ${activeMedia === mediaIndex ? 'border-valqore-accent shadow-lg shadow-valqore-accent/20' : 'border-white/20'} overflow-hidden cursor-pointer hover:border-valqore-accent transition-colors relative group`}
-                    >
-                      <img src={url.trim()} alt="thumbnail" className="w-full h-full object-cover" />
-                    </div>
-                  );
-                })}
-              </div>
+
             </div>
 
             {/* Right Column: Buy Panel */}
@@ -206,9 +204,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   </button>
                 )}
 
-                <button className="w-full bg-transparent border border-white/10 text-gray-300 hover:text-white hover:bg-white/5 py-3 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 mb-6">
-                  <span className="text-gray-400 text-lg">♡</span> Add to Wishlist
-                </button>
+
 
                 <div className="flex items-center justify-between border-t border-white/5 pt-4 pb-4 mb-4">
                   <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Secure Payments</p>
@@ -228,10 +224,10 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
               </div>
 
               <div className="flex gap-3">
-                <button className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                <button onClick={() => handleVote(selectedAccount.id, 'working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
                   <ThumbsUp size={14} /> {selectedAccount.working_votes || 0}
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                <button onClick={() => handleVote(selectedAccount.id, 'not_working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
                   <ThumbsDown size={14} /> {selectedAccount.not_working_votes || 0}
                 </button>
                 <button className="flex items-center justify-center bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg transition-colors border border-white/5">
@@ -241,39 +237,6 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
             </div>
           </div>
 
-          {/* Bottom Section: System Requirements */}
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-              System Requirements
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-              <div>
-                <h3 className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Minimum</h3>
-                <ul className="text-xs text-gray-300 space-y-2 font-medium">
-                  <li>Requires a 64-bit processor and operating system</li>
-                  <li><span className="font-bold text-white">OS:</span> Windows 10 20H1</li>
-                  <li><span className="font-bold text-white">PROCESSOR:</span> Intel i5-4670k or AMD Ryzen 3 1200</li>
-                  <li><span className="font-bold text-white">MEMORY:</span> 8 GB RAM</li>
-                  <li><span className="font-bold text-white">GRAPHICS:</span> NVIDIA GTX 1060 (6GB) or AMD RX 5500 XT (8GB)</li>
-                  <li><span className="font-bold text-white">DIRECTX:</span> Version 12</li>
-                  <li><span className="font-bold text-white">STORAGE:</span> 190 GB available space</li>
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-[10px] font-bold text-valqore-accent uppercase tracking-widest mb-4">Recommended</h3>
-                <ul className="text-xs text-gray-300 space-y-2 font-medium">
-                  <li>Requires a 64-bit processor and operating system</li>
-                  <li><span className="font-bold text-white">OS:</span> Windows 10 20H1</li>
-                  <li><span className="font-bold text-white">PROCESSOR:</span> Intel i5-8600 or AMD Ryzen 5 3600</li>
-                  <li><span className="font-bold text-white">MEMORY:</span> 16 GB RAM</li>
-                  <li><span className="font-bold text-white">GRAPHICS:</span> NVIDIA RTX 2060 Super or AMD RX 5700</li>
-                  <li><span className="font-bold text-white">DIRECTX:</span> Version 12</li>
-                  <li><span className="font-bold text-white">STORAGE:</span> 190 GB available space</li>
-                </ul>
-              </div>
-            </div>
-          </div>
 
           {/* Bottom Section: Account Details */}
           <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mb-4">
@@ -456,7 +419,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                     <AnimatePresence mode="popLayout">
           {regularAccounts.map((acc, index) => {
             // Generate some static placeholders based on index to match the premium design feel
-            const discounts = ["-20%", "-15%", "-50%", "-10%", "-25%"];
+            // Generate some static placeholders based on index to match the premium design feel
             const badges = [
               { text: "AAA", color: "bg-valqore-accent text-black" },
               { text: "HORROR", color: "bg-orange-500 text-white" },
@@ -467,7 +430,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
             const subtitles = ["RPG, Neon Studios", "Open World, Cosmic", "Horror, Dark Matter Inc", "Sports, Redline", "Action RPG, Ghost Games"];
             const prices = ["$47.99", "$69.99", "$33.99", "$14.99", "$37.49", "$44.99", "$39.99", "$59.99"];
 
-            const discount = discounts[index % discounts.length];
+
             const badge = badges[index % badges.length];
             const subtitle = subtitles[index % subtitles.length];
             const price = prices[index % prices.length];
@@ -495,20 +458,13 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                 )}
                 
                 {/* Top Right Discount Badge */}
-                <div className="absolute top-0 right-0 bg-red-500 text-white font-bold px-3 py-1 rounded-bl-xl text-xs z-10 shadow-lg shadow-red-500/20">
-                  {discount}
-                </div>
+                {acc.discount && acc.discount > 0 ? (
+                  <div className="absolute top-0 right-0 bg-red-500 text-white font-bold px-3 py-1 rounded-bl-xl text-xs z-10 shadow-lg shadow-red-500/20">
+                    -{acc.discount}%
+                  </div>
+                ) : null}
 
-                {/* Bottom Left Category Badge */}
-                <div className={"absolute bottom-3 left-3 text-[10px] font-black px-2 py-0.5 rounded shadow-lg uppercase tracking-wider z-10 " + badge.color}>
-                  {badge.text}
-                </div>
 
-                {/* Bottom Right Wishlist Icon */}
-                <div className="absolute bottom-3 right-3 w-8 h-8 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-gray-300 hover:text-white hover:bg-black/80 transition-colors border border-white/10 z-10 shadow-lg group-hover:border-white/20">
-                  <span className="text-sm font-bold opacity-80 group-hover:opacity-100">♡</span>
-                </div>
-                
                 {/* Optional Subtle Gradient Overlay for contrast */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80"></div>
               </div>

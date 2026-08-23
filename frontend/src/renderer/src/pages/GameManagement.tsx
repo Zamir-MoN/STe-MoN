@@ -17,6 +17,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   const [trailerUrl, setTrailerUrl] = useState('')
   const [isBundle, setIsBundle] = useState(false)
   const [notes, setNotes] = useState('')
+  const [appId, setAppId] = useState('')
   const [accMsg, setAccMsg] = useState('')
   
   const [error, setError] = useState('')
@@ -49,7 +50,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, app_id: appId
         })
         setAccMsg(`Steam Account '${alias}' updated!`)
         setEditingId(null)
@@ -58,7 +59,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, app_id: appId
         })
         setAccMsg(`Steam Account '${alias}' added globally!`)
       }
@@ -69,6 +70,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
       setTrailerUrl('')
       setPrice('')
       setDiscount('')
+      setAppId('')
       setIsBundle(false)
       setNotes('')
       fetchAccounts()
@@ -96,6 +98,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setTrailerUrl(acc.trailer_url || '')
     setPrice(acc.owner_name || '')
     setDiscount(acc.discount?.toString() || '')
+    setAppId(acc.app_id || '')
     setIsBundle(acc.notes ? true : false)
     setNotes(acc.notes || '')
     setAccMsg('')
@@ -276,12 +279,18 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="e.g. 3 Games Included: Game A, Game B, Game C" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50 min-h-[80px] resize-y" />
                   </div>
                 )}
+                <div className="mt-2">
+                  <label className="text-xs text-valqore-accent font-bold mb-1 flex items-center gap-1 uppercase">
+                    <Gamepad2 size={14} /> STEAM MON APP ID (OPTIONAL)
+                  </label>
+                  <input type="text" value={appId} onChange={e => setAppId(e.target.value)} placeholder="E.g. 1196590" className="w-full bg-black/30 border border-valqore-accent rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/80 transition-colors" />
+                </div>
                 <div className="flex gap-2 mt-2">
                   <button type="submit" className="flex-1 bg-valqore-accent/20 hover:bg-valqore-accent/40 border border-valqore-accent/50 text-valqore-accent font-bold py-2 rounded-lg transition-colors">
                     {editingId ? 'Save Changes' : 'Add Global Account'}
                   </button>
                   {editingId && (
-                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setTrailerUrl(''); setPrice(''); setDiscount(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
+                    <button type="button" onClick={() => { setEditingId(null); setAlias(''); setSteamUser(''); setSteamPass(''); setSteamDesc(''); setTrailerUrl(''); setPrice(''); setDiscount(''); setAppId(''); setIsBundle(false); setNotes(''); setShowAccForm(false) }} className="px-4 bg-gray-500/20 hover:bg-gray-500/40 border border-gray-500/50 text-gray-300 font-bold py-2 rounded-lg transition-colors">
                       Cancel
                     </button>
                   )}

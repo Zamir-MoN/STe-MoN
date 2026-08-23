@@ -12,7 +12,8 @@ function createWindow(): void {
     height: 900,
     show: false,
     frame: false,
-    transparent: true,
+    transparent: false,
+    backgroundColor: '#050505',
     autoHideMenuBar: true,
     icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
@@ -113,7 +114,10 @@ ipcMain.handle('launch-steam', async (_, username, password, customPath) => {
 
     // 2. Find Steam Path
     let steamPath = customPath
-    if (!steamPath) {
+    const fs = require('fs')
+    
+    if (!steamPath || !fs.existsSync(steamPath)) {
+      steamPath = null
       const commonPaths = [
         'C:\\Program Files (x86)\\Steam\\steam.exe',
         'C:\\Program Files\\Steam\\steam.exe',
@@ -121,7 +125,7 @@ ipcMain.handle('launch-steam', async (_, username, password, customPath) => {
         'D:\\Steam\\steam.exe',
         'E:\\Steam\\steam.exe'
       ]
-      const fs = require('fs')
+      
       for (const p of commonPaths) {
         try {
           if (fs.existsSync(p)) {
@@ -130,10 +134,10 @@ ipcMain.handle('launch-steam', async (_, username, password, customPath) => {
           }
         } catch (e) {}
       }
-      
-      if (!steamPath) {
-        steamPath = 'C:\\Program Files (x86)\\Steam\\steam.exe'
-      }
+    }
+
+    if (!steamPath) {
+      return { success: false, error: 'Steam executable not found. Please configure the Steam path in Settings.' }
     }
 
     // 3. Launch Steam
@@ -141,6 +145,11 @@ ipcMain.handle('launch-steam', async (_, username, password, customPath) => {
       detached: true,
       stdio: 'ignore'
     })
+
+    steamProcess.on('error', (err) => {
+      console.error('Failed to spawn Steam process:', err)
+    })
+
     steamProcess.unref()
     return { success: true }
   } catch (err: any) {
@@ -178,6 +187,11 @@ ipcMain.handle('get-hwid', async () => {
     return 'UNKNOWN-HWID'
   }
 })
+
+// Hardware acceleration optimizations for Windows 10/11
+app.commandLine.appendSwitch('enable-gpu-rasterization')
+app.commandLine.appendSwitch('enable-zero-copy')
+app.commandLine.appendSwitch('disable-software-rasterizer')
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

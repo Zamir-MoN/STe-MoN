@@ -220,18 +220,17 @@ const AccountsPage = ({ role, showNotification, searchQuery }: { role: string, s
 
             <div className="border-t border-white/10 pt-6 grid grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-gray-500 mb-1">Developer</p>
-                <p className="text-sm text-white font-bold">Neon Studios</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 mb-1">Release Date</p>
-                <p className="text-sm text-white font-bold">10/12/2025</p>
+                <p className="text-xs text-gray-500 mb-1">Powered by</p>
+                <p className="text-sm text-white font-bold">Valqore.Pro</p>
               </div>
               <div>
                 <p className="text-xs text-gray-500 mb-1">Platform</p>
+                <p className="text-sm text-white font-bold">Steam</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1">Type</p>
                 <div className="flex gap-2">
-                  <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">Windows</span>
-                  <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">PlayStation</span>
+                  <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-0.5 rounded">Steam Account</span>
                 </div>
               </div>
             </div>

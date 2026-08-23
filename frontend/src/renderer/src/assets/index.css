@@ -44,13 +44,23 @@
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: linear-gradient(125deg, #050505, #111111, #000000);
-  background-size: 400% 400%;
-  animation: gradientBG 15s ease infinite;
+  background: #000000;
+  overflow: hidden;
 }
 
-@keyframes gradientBG {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+.bg-animated::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at center, #111111 0%, #050505 40%, #000000 100%);
+  animation: rotateBG 25s linear infinite;
+  transform-origin: center center;
+}
+
+@keyframes rotateBG {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

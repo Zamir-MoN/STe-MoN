@@ -69,7 +69,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
   const handleLibraryToggle = async (id: number, inLibrary: boolean, hasAccess: boolean) => {
     if (!hasAccess) {
       alert("Buy from admin or Owner");
-      return;
+      return false;
     }
 
     try {
@@ -81,10 +81,12 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
         showNotification("Game added to your Library!", "success")
       }
       setAccounts(prev => prev.map(a => a.id === id ? { ...a, inLibrary: !inLibrary } : a))
+      return true;
     } catch (err: any) {
       console.error("Failed to toggle library status", err)
       const msg = err.response?.data?.error || "Failed to update Library";
       showNotification(msg, "error")
+      return false;
     }
   }
 
@@ -146,9 +148,9 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   
                   if (hasTrailer && activeMedia === 0) {
                     const match = selectedAccount.trailer_url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube.com/embed/${match[2]}?autoplay=1` : null;
+                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1` : null;
                     return embedUrl ? (
-                      <iframe src={embedUrl} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen></iframe>
+                      <iframe src={embedUrl} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"></iframe>
                     ) : (
                       <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
                         <p className="text-gray-500 font-bold">Invalid YouTube URL</p>
@@ -170,6 +172,48 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                 })()}
               </div>
 
+              {/* Thumbnails (Show if multiple media items exist) */}
+              {(() => {
+                const hasTrailer = !!selectedAccount.trailer_url;
+                const isBundle = !!selectedAccount.notes;
+                const images = isBundle ? (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url) : [];
+                const totalMedia = (hasTrailer ? 1 : 0) + images.length;
+                
+                if (totalMedia > 1) {
+                  return (
+                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar mt-2">
+                      {hasTrailer && (() => {
+                        const videoId = selectedAccount.trailer_url ? (selectedAccount.trailer_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/) || [])[1] : null;
+                        const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+                        return (
+                          <button 
+                            onClick={() => setActiveMedia(0)}
+                            className={`flex-shrink-0 w-32 aspect-video bg-black rounded-lg overflow-hidden border-2 transition-all relative ${activeMedia === 0 ? 'border-valqore-accent opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                          >
+                            <div className="w-full h-full flex items-center justify-center bg-gray-900 relative">
+                              {thumbUrl && (
+                                <img src={thumbUrl} alt="Video Thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-60" />
+                              )}
+                              <MonitorPlay size={24} className="text-white drop-shadow-lg absolute z-10" />
+                            </div>
+                          </button>
+                        );
+                      })()}
+                      {images.map((img: string, idx: number) => (
+                        <button 
+                          key={idx}
+                          onClick={() => setActiveMedia(hasTrailer ? idx + 1 : idx)}
+                          className={`flex-shrink-0 w-32 aspect-video bg-black rounded-lg overflow-hidden border-2 transition-all ${activeMedia === (hasTrailer ? idx + 1 : idx) ? 'border-valqore-accent opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                        >
+                          <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  )
+                }
+                return null;
+              })()}
+
             </div>
 
             {/* Right Column: Buy Panel */}
@@ -180,14 +224,18 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                     <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">ACTION</span>
                     <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">PLAYSTATION</span>
                   </div>
-                  <span className="bg-red-500 text-white font-bold px-2 py-1 text-[10px] rounded">-15% OFF</span>
+                  {selectedAccount.discount && selectedAccount.discount > 0 ? (
+                    <span className="bg-red-500 text-white font-bold px-2 py-1 text-[10px] rounded">-{selectedAccount.discount}% OFF</span>
+                  ) : null}
                 </div>
                 
                 <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Your Price</p>
                 <div className="mb-6 flex items-end gap-3">
                   <span className="text-white font-black text-3xl">{selectedAccount.owner_name ? formatPrice(selectedAccount.owner_name) : 'Free'}</span>
-                  {selectedAccount.owner_name && (
-                    <span className="text-gray-500 font-bold line-through mb-1">{formatPrice((parseFloat(selectedAccount.owner_name) * 1.15).toString())}</span>
+                  {selectedAccount.owner_name && selectedAccount.discount && selectedAccount.discount > 0 && (
+                    <span className="text-gray-500 font-bold line-through mb-1">
+                      {formatPrice((parseFloat(selectedAccount.owner_name) / (1 - selectedAccount.discount / 100)).toFixed(2))}
+                    </span>
                   )}
                 </div>
 
@@ -197,8 +245,10 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   </button>
                 ) : (
                   <button onClick={async () => {
-                      await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
-                      setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
+                      const success = await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
+                      if (success) {
+                        setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
+                      }
                     }} className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-3 rounded-lg text-sm transition-all flex items-center justify-center mb-3">
                     BUY NOW
                   </button>
@@ -216,9 +266,9 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
 
                 <table className="w-full text-left text-[10px] text-gray-400">
                   <tbody>
-                    <tr><td className="py-1.5">Developer</td><td className="text-right font-bold text-white">Santa Monica Studio</td></tr>
-                    <tr><td className="py-1.5">Release Date</td><td className="text-right font-bold text-white">11/9/2022</td></tr>
-                    <tr><td className="py-1.5">Platform</td><td className="text-right font-bold text-white">PlayStation<br/>Windows</td></tr>
+                    <tr><td className="py-1.5">Powered by</td><td className="text-right font-bold text-white">Valqore.Pro</td></tr>
+                    <tr><td className="py-1.5">Platform</td><td className="text-right font-bold text-white">Steam</td></tr>
+                    <tr><td className="py-1.5">Type</td><td className="text-right font-bold text-white">Steam Account</td></tr>
                   </tbody>
                 </table>
               </div>

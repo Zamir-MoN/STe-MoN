@@ -227,14 +227,49 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     <input type="password" value={steamPass} onChange={e => setSteamPass(e.target.value)} required className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">{isBundle ? 'Bundle Cover Image Links (Comma Separated URLs)' : 'Game Cover Image Link (URL)'}</label>
-                  <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder={isBundle ? "https://ex.com/img1.jpg, https://ex.com/img2.jpg" : "https://example.com/cover.jpg"} className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-400 mb-1 block">YouTube Trailer Link (URL)</label>
-                  <input type="text" value={trailerUrl} onChange={e => setTrailerUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
-                </div>
+                {isBundle ? (
+                  <div>
+                    <label className="text-xs text-gray-400 mb-2 block">Bundle Games Images (URLs)</label>
+                    <div className="flex flex-col gap-2">
+                      {(steamDesc || '').split(',').map((url, idx) => (
+                        <div key={idx} className="flex gap-2">
+                          <input 
+                            type="text" 
+                            value={url} 
+                            onChange={e => {
+                              const newUrls = (steamDesc || '').split(',');
+                              newUrls[idx] = e.target.value;
+                              setSteamDesc(newUrls.join(','));
+                            }} 
+                            placeholder="Image URL" 
+                            className="flex-1 bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" 
+                          />
+                          {(steamDesc || '').split(',').length > 1 && (
+                            <button type="button" onClick={() => {
+                              const newUrls = (steamDesc || '').split(',');
+                              newUrls.splice(idx, 1);
+                              setSteamDesc(newUrls.join(','));
+                            }} className="px-3 bg-red-500/20 text-red-500 rounded-lg hover:bg-red-500/40 font-bold transition-colors">✕</button>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" onClick={() => setSteamDesc(steamDesc ? steamDesc + ',' : ',')} className="text-sm text-valqore-accent bg-valqore-accent/10 border border-valqore-accent/30 py-2 rounded-lg mt-1 hover:bg-valqore-accent/20 transition-colors font-bold">
+                        + Add Another Image Link
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">Game Cover Image Link (URL)</label>
+                    <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder="https://example.com/cover.jpg" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                  </div>
+                )}
+                {!isBundle && (
+                  <div>
+                    <label className="text-xs text-gray-400 mb-1 block">YouTube Trailer Link (URL)</label>
+                    <input type="text" value={trailerUrl} onChange={e => setTrailerUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                  </div>
+                )}
                 {isBundle && (
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Bundle Description (List included games)</label>
@@ -257,51 +292,103 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
         </div>
 
         {/* Manage Existing Accounts */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-xl">
-          <div className="overflow-x-auto">
-            {isLoading ? (
-              <div>
-                {[1, 2, 3].map(i => <SkeletonRow key={i} />)}
-              </div>
-            ) : (
-              <table className="w-full text-left text-sm text-gray-400">
-                <thead className="text-xs text-gray-300 uppercase bg-black/30">
-                  <tr>
-                    <th className="px-4 py-3 rounded-tl-lg">Alias</th>
-                    <th className="px-4 py-3">Steam Username</th>
-                    <th className="px-4 py-3">Image Link</th>
-                    <th className="px-4 py-3 rounded-tr-lg text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <AnimatePresence>
-                  {filteredAccounts.map(acc => (
-                    <motion.tr 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
-                      exit={{ opacity: 0 }} 
-                      transition={{ duration: 0.3, ease: "easeInOut" }} 
-                      key={acc.id} 
-                      className="border-b border-white/5 hover:bg-white/5"
-                    >
-                      <td className="px-4 py-3 font-medium text-white">{acc.alias_name}</td>
-                      <td className="px-4 py-3">{acc.steam_username}</td>
-                      <td className="px-4 py-3 truncate max-w-xs">{acc.description || '-'}</td>
-                      <td className="px-4 py-3 text-right">
-                        <button onClick={() => handleEditClick(acc)} className="text-valqore-accent hover:text-valqore-accent mr-3">Edit</button>
-                        <button onClick={() => handleDeleteAccount(acc.id)} className="text-red-500 hover:text-red-400">Delete</button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                  </AnimatePresence>
-                  {filteredAccounts.length === 0 && (
+        <div className="flex flex-col gap-6">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-xl">
+            <h2 className="text-xl font-bold text-white mb-4">Single Games</h2>
+            <div className="overflow-x-auto">
+              {isLoading ? (
+                <div>
+                  {[1, 2, 3].map(i => <SkeletonRow key={i} />)}
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm text-gray-400">
+                  <thead className="text-xs text-gray-300 uppercase bg-black/30">
                     <tr>
-                      <td colSpan={4} className="px-4 py-6 text-center">No accounts found.</td>
+                      <th className="px-4 py-3 rounded-tl-lg">Alias</th>
+                      <th className="px-4 py-3">Steam Username</th>
+                      <th className="px-4 py-3">Image Link</th>
+                      <th className="px-4 py-3 rounded-tr-lg text-right">Actions</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
-            )}
+                  </thead>
+                  <tbody>
+                    <AnimatePresence>
+                    {filteredAccounts.filter(acc => !acc.notes).map(acc => (
+                      <motion.tr 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        transition={{ duration: 0.3, ease: "easeInOut" }} 
+                        key={acc.id} 
+                        className="border-b border-white/5 hover:bg-white/5"
+                      >
+                        <td className="px-4 py-3 font-medium text-white">{acc.alias_name}</td>
+                        <td className="px-4 py-3">{acc.steam_username}</td>
+                        <td className="px-4 py-3 truncate max-w-xs">{acc.description || '-'}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => handleEditClick(acc)} className="text-valqore-accent hover:text-valqore-accent mr-3">Edit</button>
+                          <button onClick={() => handleDeleteAccount(acc.id)} className="text-red-500 hover:text-red-400">Delete</button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                    </AnimatePresence>
+                    {filteredAccounts.filter(acc => !acc.notes).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center">No single games found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-6 rounded-xl">
+            <h2 className="text-xl font-bold text-white mb-4">Game Bundles</h2>
+            <div className="overflow-x-auto">
+              {isLoading ? (
+                <div>
+                  {[1, 2, 3].map(i => <SkeletonRow key={i} />)}
+                </div>
+              ) : (
+                <table className="w-full text-left text-sm text-gray-400">
+                  <thead className="text-xs text-gray-300 uppercase bg-black/30">
+                    <tr>
+                      <th className="px-4 py-3 rounded-tl-lg">Bundle Name</th>
+                      <th className="px-4 py-3">Steam Username</th>
+                      <th className="px-4 py-3">Image Links</th>
+                      <th className="px-4 py-3 rounded-tr-lg text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <AnimatePresence>
+                    {filteredAccounts.filter(acc => acc.notes).map(acc => (
+                      <motion.tr 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }} 
+                        transition={{ duration: 0.3, ease: "easeInOut" }} 
+                        key={acc.id} 
+                        className="border-b border-white/5 hover:bg-white/5"
+                      >
+                        <td className="px-4 py-3 font-medium text-white">{acc.alias_name}</td>
+                        <td className="px-4 py-3">{acc.steam_username}</td>
+                        <td className="px-4 py-3 truncate max-w-xs">{acc.description || '-'}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button onClick={() => handleEditClick(acc)} className="text-valqore-accent hover:text-valqore-accent mr-3">Edit</button>
+                          <button onClick={() => handleDeleteAccount(acc.id)} className="text-red-500 hover:text-red-400">Delete</button>
+                        </td>
+                      </motion.tr>
+                    ))}
+                    </AnimatePresence>
+                    {filteredAccounts.filter(acc => acc.notes).length === 0 && (
+                      <tr>
+                        <td colSpan={4} className="px-4 py-6 text-center">No bundle games found.</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         </div>
       </div>

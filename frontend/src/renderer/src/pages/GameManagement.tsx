@@ -16,6 +16,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
   const [discount, setDiscount] = useState('')
   const [trailerUrl, setTrailerUrl] = useState('')
   const [isBundle, setIsBundle] = useState(false)
+  const [otp, setOtp] = useState(false)
   const [notes, setNotes] = useState('')
   const [appId, setAppId] = useState('')
   const [accMsg, setAccMsg] = useState('')
@@ -50,7 +51,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, app_id: appId
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, otp, app_id: appId
         })
         setAccMsg(`Steam Account '${alias}' updated!`)
         setEditingId(null)
@@ -59,7 +60,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
           alias_name: alias, 
           steam_username: steamUser, 
           steam_password: steamPass, 
-          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, app_id: appId
+          description: steamDesc, notes: isBundle ? notes : '', owner_name: price, trailer_url: trailerUrl, discount, otp, app_id: appId
         })
         setAccMsg(`Steam Account '${alias}' added globally!`)
       }
@@ -72,6 +73,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
       setDiscount('')
       setAppId('')
       setIsBundle(false)
+      setOtp(false)
       setNotes('')
       fetchAccounts()
     } catch (err: any) {
@@ -100,6 +102,7 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
     setDiscount(acc.discount?.toString() || '')
     setAppId(acc.app_id || '')
     setIsBundle(acc.notes ? true : false)
+    setOtp(acc.otp || false)
     setNotes(acc.notes || '')
     setAccMsg('')
     setShowAccForm(true)
@@ -200,9 +203,15 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
               {accMsg && <p className="text-green-400 text-sm mb-4">{accMsg}</p>}
               
               <form onSubmit={handleCreateOrUpdateAccount} className="flex flex-col gap-4">
-                <div className="flex items-center gap-2 mb-2 bg-black/20 p-3 rounded-lg border border-white/5">
-                  <input type="checkbox" id="isBundle" checked={isBundle} onChange={e => setIsBundle(e.target.checked)} className="w-4 h-4 accent-valqore-accent" />
-                  <label htmlFor="isBundle" className="text-sm text-gray-300 font-bold cursor-pointer">Is this a Game Bundle?</label>
+                <div className="flex items-center gap-4 mb-2 bg-black/20 p-3 rounded-lg border border-white/5">
+                  <div className="flex items-center gap-2">
+                    <input type="checkbox" id="isBundle" checked={isBundle} onChange={e => setIsBundle(e.target.checked)} className="w-4 h-4 accent-valqore-accent" />
+                    <label htmlFor="isBundle" className="text-sm text-gray-300 font-bold cursor-pointer">Is this a Game Bundle?</label>
+                  </div>
+                  <div className="flex items-center gap-2 ml-4">
+                    <input type="checkbox" id="otp" checked={otp} onChange={e => setOtp(e.target.checked)} className="w-4 h-4 accent-valqore-accent" />
+                    <label htmlFor="otp" className="text-sm text-gray-300 font-bold cursor-pointer">Requires OTP?</label>
+                  </div>
                 </div>
                 <div>
                   <div className="grid grid-cols-5 gap-4">

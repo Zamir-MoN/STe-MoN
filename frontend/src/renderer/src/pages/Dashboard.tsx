@@ -134,7 +134,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mb-12">
           {/* Left Column: Media (Portrait) */}
           <div className="w-full lg:w-[35%] shrink-0 flex flex-col gap-4">
-            <div className="w-full aspect-[4/5] bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative">
+            <div className="w-full aspect-[3/4] bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative">
               {(() => {
                 const images = (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url);
                 const imageUrl = images[activeMedia] || images[0];
@@ -278,7 +278,7 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                   <tr>
                     <td className="py-2 text-gray-500 text-[10px]">Powered by<br/><span className="text-white font-black text-xs">Valqore.Pro</span></td>
                     <td className="py-2 text-gray-500 text-[10px]">Platform<br/><span className="text-white font-black text-xs">Steam</span></td>
-                    <td className="py-2 text-gray-500 text-[10px]">Type<br/><span className="bg-white/10 text-white font-bold px-2 py-1 rounded text-[10px]">Steam Account</span></td>
+                    <td className="py-2 text-gray-500 text-[10px]">Type<br/><span className="text-white font-black text-xs">Steam Account</span></td>
                   </tr>
                 </tbody>
               </table>
@@ -455,8 +455,8 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
               onClick={() => setSelectedAccount(acc)}
               className="flex flex-col group cursor-pointer"
             >
-              {/* Game Cover Image Container (Square-ish) */}
-              <div className="relative aspect-[4/5] bg-black/40 rounded-xl overflow-hidden shadow-xl border border-white/10 group-hover:border-white/30 transition-all group-hover:shadow-2xl group-hover:shadow-black/50 mb-3">
+              {/* Game Cover Image Container */}
+              <div className="relative aspect-[3/4] bg-black/40 rounded-xl overflow-hidden shadow-xl border border-white/10 group-hover:border-white/30 transition-all group-hover:shadow-2xl group-hover:shadow-black/50 mb-3">
                 
                 {acc.description ? (
                   <img src={(acc.description || '').split(',')[0].trim()} alt={acc.alias_name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -470,6 +470,13 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
                 {acc.discount && acc.discount > 0 ? (
                   <div className="absolute top-0 right-0 bg-red-500 text-white font-bold px-3 py-1 rounded-bl-xl text-xs z-10 shadow-lg shadow-red-500/20">
                     -{acc.discount}%
+                  </div>
+                ) : null}
+
+                {/* Top Left OTP Badge */}
+                {acc.otp ? (
+                  <div className="absolute top-2 left-2 bg-valqore-accent text-black font-bold px-2 py-1 rounded text-[10px] z-10 shadow-lg shadow-valqore-accent/20">
+                    OTP
                   </div>
                 ) : null}
 

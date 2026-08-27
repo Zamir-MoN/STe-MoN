@@ -38,6 +38,7 @@ model Account {
   working_votes     Int           @default(0)
   not_working_votes Int           @default(0)
   discount          Int           @default(0)
+  otp               Boolean       @default(false)
   app_id            String?
   created_at        DateTime      @default(now())
   activityLogs      ActivityLog[]

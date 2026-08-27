@@ -2,6 +2,7 @@ import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { HashRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Bell, Gamepad2, X } from 'lucide-react'
+import api from './api'
 
 import TitleBar from './components/TitleBar'
 import Sidebar from './components/Sidebar'
@@ -81,12 +82,36 @@ function App() {
   }
 
   useEffect(() => {
-    const token = localStorage.getItem('steamhub_token')
-    const savedRole = localStorage.getItem('steamhub_role')
-    if (token) {
-      setIsAuthenticated(true)
-      if (savedRole) setRole(savedRole)
+    const validateToken = async () => {
+      const token = localStorage.getItem('steamhub_token')
+      const savedRole = localStorage.getItem('steamhub_role')
+      
+      if (token) {
+        // Optimistically set to true for faster UI loading, but we will verify
+        setIsAuthenticated(true)
+        if (savedRole) setRole(savedRole)
+
+        try {
+          let hwid = 'UNKNOWN-HWID'
+          // @ts-ignore
+          if (window.api && window.api.getHwid) {
+            // @ts-ignore
+            hwid = await window.api.getHwid()
+          }
+          const res = await api.post('/auth/validate-session', { hwid })
+          if (res.data.valid) {
+            setRole(res.data.user.role)
+            localStorage.setItem('steamhub_role', res.data.user.role)
+          }
+        } catch (error) {
+          console.error("Session validation failed:", error)
+          localStorage.removeItem('steamhub_token')
+          localStorage.removeItem('steamhub_role')
+          setIsAuthenticated(false)
+        }
+      }
     }
+    validateToken()
   }, [])
 
   useEffect(() => {

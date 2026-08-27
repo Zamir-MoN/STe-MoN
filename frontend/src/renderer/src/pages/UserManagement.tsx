@@ -112,6 +112,18 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
     }
   }
 
+  const handleResetDevice = async (id: number) => {
+    if (!confirm('Are you sure you want to reset the device binding for this user?')) return
+    try {
+      await api.put(`/auth/users/${id}/reset-hwid`)
+      setUserMsg('Device binding reset successfully!')
+      fetchUsers()
+      setTimeout(() => setUserMsg(''), 3000)
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to reset device binding')
+    }
+  }
+
   const handleGrantAccess = async () => {
     if (!editingUserId || !selectedGameToGrant) return;
     try {
@@ -370,7 +382,10 @@ const UserManagement = ({ role: currentUserRole }: { role: string }) => {
                       <td className="px-4 py-3 text-right whitespace-nowrap">
 
                         {((currentUserRole === 'owner' && u.role !== 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
-                          <button onClick={() => handleEditUserClick(u)} className="text-valqore-accent hover:text-purple-300 mr-3 text-xs">Edit</button>
+                          <>
+                            <button onClick={() => handleEditUserClick(u)} className="text-valqore-accent hover:text-purple-300 mr-3 text-xs">Edit</button>
+                            <button onClick={() => handleResetDevice(u.id)} className="text-blue-500 hover:text-blue-400 mr-3 text-xs">Reset Device</button>
+                          </>
                         )}
                         {!u.isDefaultAdmin && !u.isSelf && ((currentUserRole === 'owner') || (currentUserRole === 'admin' && u.role === 'user')) && (
                           <button onClick={() => handleDeleteUser(u.id)} className="text-red-500 hover:text-red-400 text-xs">Delete</button>

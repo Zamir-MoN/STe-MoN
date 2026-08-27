@@ -20,8 +20,46 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password_hash)
     if (!match) return res.status(400).json({ error: 'Invalid credentials' })
 
+    // Enforce One Device Per User (HWID Binding)
+    if (user.role === 'user') {
+      const currentHwid = hwid || 'UNKNOWN-HWID'
+      if (!user.hwid) {
+        // First login: bind the device to the user
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { hwid: currentHwid }
+        })
+      } else if (user.hwid !== currentHwid) {
+        // HWID mismatch: user is trying to log in from a different device
+        return res.status(403).json({ 
+          error: 'Account is already bound to another device. Please contact an admin to reset your device.' 
+        })
+      }
+    }
+
     const token = generateToken(user.id)
     res.json({ token, user: { id: user.id, username: user.username, role: user.role } })
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' })
+  }
+})
+
+// Validate Session Route (Check Token + HWID)
+router.post('/validate-session', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { hwid } = req.body
+    const user = await prisma.user.findUnique({ where: { id: req.userId } })
+    
+    if (!user) return res.status(401).json({ error: 'User not found' })
+
+    if (user.role === 'user') {
+      const currentHwid = hwid || 'UNKNOWN-HWID'
+      if (user.hwid && user.hwid !== currentHwid) {
+        return res.status(403).json({ error: 'Session invalid: HWID mismatch' })
+      }
+    }
+
+    res.json({ valid: true, user: { id: user.id, username: user.username, role: user.role } })
   } catch (error) {
     res.status(500).json({ error: 'Server error' })
   }

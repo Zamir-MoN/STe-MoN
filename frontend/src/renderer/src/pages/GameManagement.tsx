@@ -267,12 +267,10 @@ const GameManagement = ({ searchQuery }: { searchQuery: string }) => {
                     <input type="text" value={steamDesc} onChange={e => setSteamDesc(e.target.value)} placeholder="https://example.com/cover.jpg" className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
                   </div>
                 )}
-                {!isBundle && (
-                  <div>
-                    <label className="text-xs text-gray-400 mb-1 block">YouTube Trailer Link (URL)</label>
-                    <input type="text" value={trailerUrl} onChange={e => setTrailerUrl(e.target.value)} placeholder="https://youtube.com/watch?v=..." className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
-                  </div>
-                )}
+                <div>
+                  <label className="text-xs text-gray-400 mb-1 block">Game Page Link (URL)</label>
+                  <input type="text" value={trailerUrl} onChange={e => setTrailerUrl(e.target.value)} placeholder="https://valqore.pro/game/..." className="w-full bg-black/30 border border-white/10 rounded-lg p-2 text-sm focus:outline-none focus:border-valqore-accent/50" />
+                </div>
                 {isBundle && (
                   <div>
                     <label className="text-xs text-gray-400 mb-1 block">Bundle Description (List included games)</label>

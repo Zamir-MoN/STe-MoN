@@ -18,7 +18,8 @@ function createWindow(): void {
     icon: join(__dirname, '../../build/icon.png'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      backgroundThrottling: true // Reduce RAM/CPU when app is in the background
     }
   })
 

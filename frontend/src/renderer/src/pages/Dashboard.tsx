@@ -131,212 +131,171 @@ const Dashboard = ({ role, showNotification, searchQuery, currency = 'INR' }: { 
           <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" /> Back
         </button>
 
-        <h1 className="text-3xl lg:text-4xl font-black text-white mb-6 tracking-tight uppercase flex items-center gap-3">
-          <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
-          {selectedAccount.alias_name} FREE ACCOUNT
-        </h1>
-
-        <div className="flex flex-col gap-6 lg:gap-12 mb-12">
-          {/* Top Section */}
-          <div className="flex flex-col lg:flex-row gap-8">
-            {/* Left Column: Media */}
-            <div className="w-full lg:w-[65%] flex flex-col gap-4">
-              <div className="w-full aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative">
-                {(() => {
-                  const hasTrailer = !!selectedAccount.trailer_url;
-                  const images = (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url);
-                  
-                  if (hasTrailer && activeMedia === 0) {
-                    const match = selectedAccount.trailer_url.match(/^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-                    const embedUrl = match && match[2].length === 11 ? `https://www.youtube-nocookie.com/embed/${match[2]}?autoplay=1` : null;
-                    return embedUrl ? (
-                      <iframe src={embedUrl} className="w-full h-full border-0" allow="autoplay; encrypted-media" allowFullScreen referrerPolicy="strict-origin-when-cross-origin"></iframe>
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
-                        <p className="text-gray-500 font-bold">Invalid YouTube URL</p>
-                      </div>
-                    );
-                  } else {
-                    const imageIndex = hasTrailer ? activeMedia - 1 : activeMedia;
-                    const imageUrl = images[imageIndex];
-                    if (imageUrl) {
-                      return <img src={imageUrl} alt={selectedAccount.alias_name} className="w-full h-full object-cover" />;
-                    } else {
-                      return (
-                        <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
-                          <Gamepad2 size={64} className="text-white/20" />
-                        </div>
-                      );
-                    }
-                  }
-                })()}
-              </div>
-
-              {/* Thumbnails (Show if multiple media items exist) */}
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-12 mb-12">
+          {/* Left Column: Media (Portrait) */}
+          <div className="w-full lg:w-[35%] shrink-0 flex flex-col gap-4">
+            <div className="w-full aspect-[4/5] bg-black rounded-xl overflow-hidden shadow-2xl border border-white/10 relative">
               {(() => {
-                const hasTrailer = !!selectedAccount.trailer_url;
-                const isBundle = !!selectedAccount.notes;
-                const images = isBundle ? (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url) : [];
-                const totalMedia = (hasTrailer ? 1 : 0) + images.length;
+                const images = (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url);
+                const imageUrl = images[activeMedia] || images[0];
                 
-                if (totalMedia > 1) {
+                if (imageUrl) {
                   return (
-                    <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar mt-2">
-                      {hasTrailer && (() => {
-                        const videoId = selectedAccount.trailer_url ? (selectedAccount.trailer_url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&]{11})/) || [])[1] : null;
-                        const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
-                        return (
-                          <button 
-                            onClick={() => setActiveMedia(0)}
-                            className={`flex-shrink-0 w-32 aspect-video bg-black rounded-lg overflow-hidden border-2 transition-all relative ${activeMedia === 0 ? 'border-valqore-accent opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
-                          >
-                            <div className="w-full h-full flex items-center justify-center bg-gray-900 relative">
-                              {thumbUrl && (
-                                <img src={thumbUrl} alt="Video Thumbnail" className="absolute inset-0 w-full h-full object-cover opacity-60" />
-                              )}
-                              <MonitorPlay size={24} className="text-white drop-shadow-lg absolute z-10" />
-                            </div>
-                          </button>
-                        );
-                      })()}
-                      {images.map((img: string, idx: number) => (
-                        <button 
-                          key={idx}
-                          onClick={() => setActiveMedia(hasTrailer ? idx + 1 : idx)}
-                          className={`flex-shrink-0 w-32 aspect-video bg-black rounded-lg overflow-hidden border-2 transition-all ${activeMedia === (hasTrailer ? idx + 1 : idx) ? 'border-valqore-accent opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
-                        >
-                          <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+                    <img src={imageUrl} alt={selectedAccount.alias_name} className="absolute inset-0 w-full h-full object-cover drop-shadow-2xl z-10" />
+                  );
+                } else {
+                  return (
+                    <div className="w-full h-full bg-gradient-to-tr from-gray-900 to-gray-800 flex items-center justify-center">
+                      <Gamepad2 size={64} className="text-white/20" />
                     </div>
-                  )
+                  );
                 }
-                return null;
               })()}
-
             </div>
 
-            {/* Right Column: Buy Panel */}
-            <div className="w-full lg:w-[35%] flex flex-col gap-4">
-              <div className="bg-[#111111] border border-white/5 rounded-xl p-6 shadow-xl relative overflow-hidden">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="flex gap-2">
-                    <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">ACTION</span>
-                    <span className="bg-white/10 text-gray-300 text-[10px] font-bold px-2 py-1 rounded">PLAYSTATION</span>
+            {/* Thumbnails (Show if multiple media items exist) */}
+            {(() => {
+              const isBundle = !!selectedAccount.notes;
+              const images = isBundle 
+                ? (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url) 
+                : (selectedAccount.description || '').split(',').map((url: string) => url.trim()).filter((url: string) => url);
+              
+              if (images.length > 1) {
+                return (
+                  <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar mt-2">
+                    {images.map((img: string, idx: number) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setActiveMedia(idx)}
+                        className={`flex-shrink-0 w-24 aspect-[4/5] bg-black rounded-lg overflow-hidden border-2 transition-all ${activeMedia === idx ? 'border-valqore-accent opacity-100' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                      >
+                        <img src={img} alt="Thumbnail" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
-                  {selectedAccount.discount && selectedAccount.discount > 0 ? (
-                    <span className="bg-red-500 text-white font-bold px-2 py-1 text-[10px] rounded">-{selectedAccount.discount}% OFF</span>
-                  ) : null}
-                </div>
-                
-                <p className="text-gray-400 text-[10px] font-bold uppercase tracking-wider mb-1">Your Price</p>
-                <div className="mb-6 flex items-end gap-3">
-                  <span className="text-white font-black text-3xl">{selectedAccount.owner_name ? formatPrice(selectedAccount.owner_name) : 'Free'}</span>
-                  {selectedAccount.owner_name && selectedAccount.discount && selectedAccount.discount > 0 && (
-                    <span className="text-gray-500 font-bold line-through mb-1">
-                      {formatPrice((parseFloat(selectedAccount.owner_name) / (1 - selectedAccount.discount / 100)).toFixed(2))}
-                    </span>
-                  )}
-                </div>
-
-                {inLibrary ? (
-                  <button disabled className="w-full bg-gray-600 text-white font-black py-3 rounded-lg text-sm flex items-center justify-center gap-3 mb-3 cursor-not-allowed">
-                    ALREADY IN LIBRARY
-                  </button>
-                ) : (
-                  <button onClick={async () => {
-                      const success = await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
-                      if (success) {
-                        setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
-                      }
-                    }} className="w-full bg-valqore-accent hover:bg-valqore-accent/90 text-black font-black py-3 rounded-lg text-sm transition-all flex items-center justify-center mb-3">
-                    BUY NOW
-                  </button>
-                )}
-
-
-
-                <div className="flex items-center justify-between border-t border-white/5 pt-4 pb-4 mb-4">
-                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Secure Payments</p>
-                  <div className="flex gap-2">
-                     <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-400 font-bold border border-white/5 shadow-sm">UPI</div>
-                     <div className="w-8 h-5 bg-white/10 rounded flex items-center justify-center text-[8px] text-gray-400 font-bold border border-white/5 shadow-sm">T</div>
-                  </div>
-                </div>
-
-                <table className="w-full text-left text-[10px] text-gray-400">
-                  <tbody>
-                    <tr><td className="py-1.5">Powered by</td><td className="text-right font-bold text-white">Valqore.Pro</td></tr>
-                    <tr><td className="py-1.5">Platform</td><td className="text-right font-bold text-white">Steam</td></tr>
-                    <tr><td className="py-1.5">Type</td><td className="text-right font-bold text-white">Steam Account</td></tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex gap-3">
-                <button onClick={() => handleVote(selectedAccount.id, 'working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
-                  <ThumbsUp size={14} /> {selectedAccount.working_votes || 0}
-                </button>
-                <button onClick={() => handleVote(selectedAccount.id, 'not_working')} className="flex-1 flex items-center justify-center gap-2 bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg text-xs font-bold transition-colors border border-white/5">
-                  <ThumbsDown size={14} /> {selectedAccount.not_working_votes || 0}
-                </button>
-                <button className="flex items-center justify-center bg-white/5 hover:bg-white/10 text-gray-300 px-4 py-2.5 rounded-lg transition-colors border border-white/5">
-                  <Link size={14} />
-                </button>
-              </div>
-            </div>
+                )
+              }
+              return null;
+            })()}
           </div>
 
+          {/* Right Column: Details & Buy Panel */}
+          <div className="w-full lg:w-[65%] flex flex-col gap-6">
+            <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight uppercase flex items-center gap-3">
+              <div className="w-3 h-3 rotate-45 bg-valqore-accent"></div>
+              {selectedAccount.alias_name} DETAILS
+            </h1>
 
-          {/* Bottom Section: Account Details */}
-          <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mb-4">
-            <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
-              <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-              Account Details
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
-              <div className="flex gap-4">
-                <div className="mt-1 text-valqore-accent"><Play size={20} /></div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Instant Delivery</h4>
-                  <p className="text-[11px] text-gray-400 mt-1">Your account credentials will be emailed to you immediately after verification.</p>
+            {/* Buy Panel */}
+            <div className="bg-[#111111] border border-white/5 rounded-2xl p-8 relative overflow-hidden">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex gap-2">
+                  <span className="bg-[#1a1a1a] text-gray-300 text-[10px] font-bold px-3 py-1.5 rounded border border-white/5">RPG</span>
+                  <span className="bg-[#1a1a1a] text-gray-300 text-[10px] font-bold px-3 py-1.5 rounded border border-white/5">WINDOWS</span>
                 </div>
               </div>
-              <div className="flex gap-4">
-                <div className="mt-1 text-valqore-accent"><Activity size={20} /></div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Lifetime Warranty</h4>
-                  <p className="text-[11px] text-gray-400 mt-1">Full support provided as long as you follow the account guidelines.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="mt-1 text-valqore-accent"><Users size={20} /></div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Global Access</h4>
-                  <p className="text-[11px] text-gray-400 mt-1">Play from anywhere in the world without region restrictions.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="mt-1 text-valqore-accent"><Link size={20} /></div>
-                <div>
-                  <h4 className="font-bold text-white text-sm">Family Sharing</h4>
-                  <p className="text-[11px] text-gray-400 mt-1">Available for offline mode and family sharing features.</p>
+              
+              {inLibrary && !selectedAccount.trailer_url ? (
+                <button disabled className="w-full bg-green-500/5 border border-green-500/30 text-green-500 font-black py-4 rounded-xl text-sm flex items-center justify-center gap-3 mb-6 shadow-[0_0_15px_rgba(34,197,94,0.05)]">
+                  <Check size={18} /> ALREADY IN LIBRARY
+                </button>
+              ) : (
+                <button onClick={async () => {
+                    if (selectedAccount.trailer_url) {
+                      window.open(selectedAccount.trailer_url, '_blank');
+                      return;
+                    }
+                    const success = await handleLibraryToggle(selectedAccount.id, false, selectedAccount.hasAccess !== false);
+                    if (success) {
+                      setSelectedAccount((prev: any) => prev ? {...prev, inLibrary: true} : prev);
+                    }
+                  }} className="w-full bg-valqore-accent hover:bg-[#bceb00] text-black font-black py-4 rounded-xl text-sm transition-all flex items-center justify-center mb-6 shadow-[0_0_20px_rgba(212,255,0,0.3)] hover:scale-[1.02]">
+                  BUY NOW
+                </button>
+              )}
+
+              <div className="flex flex-col items-center justify-center pt-2 pb-4 border-b border-white/5 mb-4">
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-wider mb-2">Secure Payments</p>
+                <div className="flex gap-3">
+                    <div className="w-10 h-6 bg-[#0a0a0a] rounded flex items-center justify-center text-[9px] text-gray-500 font-bold border border-white/5">UPI</div>
+                    <div className="w-10 h-6 bg-[#0a0a0a] rounded flex items-center justify-center text-[9px] text-gray-500 font-bold border border-white/5">T</div>
+                    <div className="w-10 h-6 bg-[#0a0a0a] rounded flex items-center justify-center text-[9px] text-gray-500 font-bold border border-white/5">L</div>
                 </div>
               </div>
             </div>
-          </div>
 
-          {selectedAccount.notes && (
-            <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mb-4">
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+            {/* Votes */}
+            <div className="flex gap-3">
+              <button onClick={() => handleVote(selectedAccount.id, 'working')} className="flex-1 flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 text-gray-300 px-4 py-3 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                <ThumbsUp size={16} /> {selectedAccount.working_votes || 0}
+              </button>
+              <button onClick={() => handleVote(selectedAccount.id, 'not_working')} className="flex-1 flex items-center justify-center gap-2 bg-transparent hover:bg-white/5 text-gray-300 px-4 py-3 rounded-lg text-xs font-bold transition-colors border border-white/5">
+                <ThumbsDown size={16} /> {selectedAccount.not_working_votes || 0}
+              </button>
+            </div>
+
+            {/* Account Details */}
+            <div className="mt-4 border-t border-white/5 pt-8">
+              <h2 className="text-lg font-bold text-white mb-6 flex items-center gap-3">
                 <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
-                Included Games
+                Account Details
               </h2>
-              <div className="text-gray-300 leading-relaxed text-sm whitespace-pre-line">
-                {selectedAccount.notes}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-12">
+                <div className="flex gap-4">
+                  <div className="mt-1 text-valqore-accent"><Play size={18} /></div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">Instant Delivery</h4>
+                    <p className="text-[11px] text-gray-400 mt-1">Your account credentials will be emailed to you immediately after verification.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="mt-1 text-valqore-accent"><Activity size={18} /></div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">Lifetime Warranty</h4>
+                    <p className="text-[11px] text-gray-400 mt-1">Full support provided as long as you follow the account guidelines.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="mt-1 text-valqore-accent"><Users size={18} /></div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">Global Access</h4>
+                    <p className="text-[11px] text-gray-400 mt-1">Play from anywhere in the world without region restrictions.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4">
+                  <div className="mt-1 text-valqore-accent"><Link size={18} /></div>
+                  <div>
+                    <h4 className="font-bold text-white text-sm">Family Sharing</h4>
+                    <p className="text-[11px] text-gray-400 mt-1">Available for offline mode and family sharing features.</p>
+                  </div>
+                </div>
               </div>
             </div>
-          )}
+
+            <div className="mt-8 border-t border-white/5 pt-6 pb-6">
+              <table className="w-full text-left text-xs text-gray-400">
+                <tbody>
+                  <tr>
+                    <td className="py-2 text-gray-500 text-[10px]">Powered by<br/><span className="text-white font-black text-xs">Valqore.Pro</span></td>
+                    <td className="py-2 text-gray-500 text-[10px]">Platform<br/><span className="text-white font-black text-xs">Steam</span></td>
+                    <td className="py-2 text-gray-500 text-[10px]">Type<br/><span className="bg-white/10 text-white font-bold px-2 py-1 rounded text-[10px]">Steam Account</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {selectedAccount.notes && (
+              <div className="bg-[#111111] border border-white/5 rounded-xl p-8 mt-4">
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rotate-45 bg-valqore-accent"></div>
+                  Included Games
+                </h2>
+                <div className="text-gray-300 leading-relaxed text-sm whitespace-pre-line">
+                  {selectedAccount.notes}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </motion.div>
     )

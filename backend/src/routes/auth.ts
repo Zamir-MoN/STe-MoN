@@ -305,4 +305,32 @@ router.put('/profile', authenticate, async (req: AuthRequest, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }) }
 })
 
+// Update current user credentials
+router.put('/update-credentials', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { currentPassword, newUsername, newPassword } = req.body
+    const user = await prisma.user.findUnique({ where: { id: req.userId } })
+    if (!user) return res.status(404).json({ error: 'User not found' })
+    
+    const match = await bcrypt.compare(currentPassword, user.password_hash)
+    if (!match) return res.status(400).json({ error: 'Incorrect current password' })
+
+    const data: any = {}
+    if (newUsername && newUsername !== user.username) {
+      const existing = await prisma.user.findUnique({ where: { username: newUsername } })
+      if (existing) return res.status(400).json({ error: 'Username already taken' })
+      data.username = newUsername
+    }
+    if (newPassword) {
+      data.password_hash = await bcrypt.hash(newPassword, 10)
+    }
+    
+    if (Object.keys(data).length > 0) {
+      await prisma.user.update({ where: { id: req.userId }, data })
+    }
+    
+    res.json({ message: 'Credentials updated successfully' })
+  } catch (error) { res.status(500).json({ error: 'Server error' }) }
+})
+
 export default router

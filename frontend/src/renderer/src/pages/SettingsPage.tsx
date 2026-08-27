@@ -12,6 +12,11 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
   const [checkingPerms, setCheckingPerms] = useState(false)
   const [permsOk, setPermsOk] = useState<boolean | null>(null)
 
+  // Credentials state
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newUsername, setNewUsername] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -60,6 +65,26 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
       window.dispatchEvent(new Event('profile_updated'))
     } catch (err) {
       showNotification("Failed to save settings", "error")
+    }
+  }
+
+  const handleChangeCredentials = async () => {
+    if (!currentPassword) {
+      showNotification("Current password is required", "error");
+      return;
+    }
+    if (!newUsername && !newPassword) {
+      showNotification("Please provide a new username or password", "info");
+      return;
+    }
+    try {
+      await api.put('/auth/update-credentials', { currentPassword, newUsername, newPassword });
+      showNotification("Credentials updated successfully!", "success");
+      setCurrentPassword('');
+      setNewUsername('');
+      setNewPassword('');
+    } catch (err: any) {
+      showNotification(err.response?.data?.error || "Failed to update credentials", "error");
     }
   }
 
@@ -216,6 +241,29 @@ const SettingsPage = ({ showNotification }: { showNotification: (msg: React.Reac
                 )}
               </div>
             )}
+          </div>
+        </section>
+
+        <section className="bg-black/20 border border-white/10 rounded-xl p-6">
+          <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><Shield size={20} className="text-valqore-accent" /> Change Login Credentials</h2>
+          <p className="text-sm text-gray-400 mb-6">Update your admin username or password. You must provide your current password to make changes.</p>
+          
+          <div className="space-y-4 max-w-md">
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">Current Password *</label>
+              <input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-valqore-accent/50 focus:ring-1 focus:ring-valqore-accent/50 transition-all" placeholder="Enter current password" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">New Username (Optional)</label>
+              <input type="text" value={newUsername} onChange={e => setNewUsername(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-valqore-accent/50 focus:ring-1 focus:ring-valqore-accent/50 transition-all" placeholder="Enter new username" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-400 mb-1">New Password (Optional)</label>
+              <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-valqore-accent/50 focus:ring-1 focus:ring-valqore-accent/50 transition-all" placeholder="Enter new password" />
+            </div>
+            <div className="pt-2">
+              <button onClick={handleChangeCredentials} className="px-6 py-2.5 bg-valqore-accent/20 hover:bg-valqore-accent/40 border border-valqore-accent/50 text-valqore-accent rounded-lg text-sm font-bold transition-all w-full">Update Credentials</button>
+            </div>
           </div>
         </section>
 
